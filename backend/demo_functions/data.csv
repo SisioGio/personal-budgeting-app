@@ -1,0 +1,9 @@
+date,type,amount,description,id,signed_amount,period
+2025-11-01,E,900,Rent,,-900,2511
+2025-11-01,E,50,Internet,,-50,2511
+2025-11-01,I,3200,Salary,,3200,2511
+2025-11-15,E,300,Holiday Saving,p1,-300,2511
+2025-12-01,E,900,Rent,,-900,2512
+2025-12-01,E,50,Internet,,-50,2512
+2025-12-01,I,3200,Salary,,3200,2512
+2025-12-10,I,100,Gift (Dec),p2,100,2512
