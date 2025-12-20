@@ -26,6 +26,16 @@ jobs:
       - name: Build React app
         working-directory: frontend
         run: npm run build
+      
+      - name: Read bucket name from CloudFormation
+        id: bucket
+        run: |
+          BUCKET=$(aws cloudformation describe-stacks \
+            --stack-name FrontendBucketStack \
+            --query "Stacks[0].Outputs[?OutputKey=='FrontendBucketName'].OutputValue" \
+            --output text)
+
+          echo "bucket=$BUCKET" >> $GITHUB_OUTPUT
 
       - name: Deploy to S3
         env:
@@ -33,4 +43,4 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
-          aws s3 sync frontend/build s3://budgeting-app-alessio --delete
+          aws s3 sync frontend/build s3://${{ steps.bucket.outputs.bucket }} --delete
