@@ -13,11 +13,6 @@ from datetime import datetime, timedelta,UTC
 from src.utils.utils import get_secret
 load_dotenv()
 
-
-
-
-
-
 JWT_SECRET_NAME = os.environ.get("JWT_SECRET_NAME")
 
 SECRET_KEY = get_secret(JWT_SECRET_NAME)

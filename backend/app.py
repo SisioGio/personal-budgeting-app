@@ -5,3 +5,5 @@ from stack import MyApiStack
 app = cdk.App()
 MyApiStack(app, "TemplateServerlessApp")
 app.synth()
+
+
