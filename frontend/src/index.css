@@ -1,0 +1,30 @@
+body {
+  margin: 0;
+  
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.react-pdf__Page__textContent, 
+.react-pdf__Page__annotations {
+  display: none;
+}
+
+html{
+  scroll-behavior: smooth;
+}
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+   -webkit-transition-delay: 9999s;
+   transition-delay: 9999s;
+}input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+   -webkit-transition-delay: 9999s;
+   transition-delay: 9999s;
+}

@@ -1,0 +1,4 @@
+aws-lambda-powertools
+fastjsonschema
+aws_xray_sdk
+PyJWT

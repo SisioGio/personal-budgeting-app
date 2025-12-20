@@ -2,3 +2,7 @@ bcrypt
 PyJWT
 requests
 urllib3==1.26.6
+aws-lambda-powertools
+fastjsonschema
+aws_xray_sdk
+python-dotenv

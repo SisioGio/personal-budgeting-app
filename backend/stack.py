@@ -9,6 +9,7 @@ from aws_cdk import (
     CfnOutput
 )
 from constructs import Construct
+from aws_cdk import Duration
 
 
 def generate_name(name,env,type):
@@ -38,47 +39,92 @@ class MyApiStack(Stack):
                                     ))
         table_actuals = dynamo.Table(
             self,
-            generate_name('actuals', 'dev', 'table'),  # CDK logical ID
-            table_name=generate_name('actuals', 'dev', 'table'),  # actual table name
+            generate_name('actuals', 'dev', 'table'),
+            table_name=generate_name('actuals', 'dev', 'table'),
             partition_key=dynamo.Attribute(
+                name="record_id",
+                type=dynamo.AttributeType.STRING
+            ),
+            sort_key=dynamo.Attribute(
+                name="date",
+                type=dynamo.AttributeType.STRING
+            ),
+            removal_policy=RemovalPolicy.DESTROY
+        )
+        
+        # GSI to query by email
+        table_actuals.add_global_secondary_index(
+            index_name="EmailIndex",
+            partition_key= dynamo.Attribute(
                 name="email",
                 type=dynamo.AttributeType.STRING
             ),
             sort_key=dynamo.Attribute(
                 name="date",
-                type=dynamo.AttributeType.STRING  # or NUMBER if it’s a timestamp
+                type=dynamo.AttributeType.STRING
             ),
-            removal_policy=RemovalPolicy.DESTROY  # optional, for dev environment
+            projection_type=dynamo.ProjectionType.ALL
         )
+        
         table_forecasts = dynamo.Table(
             self,
             generate_name('forecast', 'dev', 'table'),  # CDK logical ID
             table_name=generate_name('forecast', 'dev', 'table'),  # actual table name
             partition_key=dynamo.Attribute(
-                name="email",
+                name="record_id",
                 type=dynamo.AttributeType.STRING
             ),
             sort_key=dynamo.Attribute(
-                name="date",
+                name="forecast_id",
                 type=dynamo.AttributeType.STRING  # or NUMBER if it’s a timestamp
             ),
             removal_policy=RemovalPolicy.DESTROY  # optional, for dev environment
-        )       
-        # Main DynamoDB table
-        table_financials = dynamo.Table(
-            self,
-            "FinancialsTable",
-            table_name="financials-dev",
+        )
+        # GSI to query by email
+        table_forecasts.add_global_secondary_index(
+            index_name="EmailIndex",
             partition_key=dynamo.Attribute(
                 name="email",
                 type=dynamo.AttributeType.STRING
             ),
             sort_key=dynamo.Attribute(
-                name="date",
+                name="forecast_id",
+                type=dynamo.AttributeType.STRING
+            ),
+            projection_type=dynamo.ProjectionType.ALL
+        )
+        
+        
+        
+        # Main DynamoDB table
+        table_financials = dynamo.Table(
+            self,
+            "FinancialsTable",
+            table_name="financialsdt-dev",
+            partition_key=dynamo.Attribute(
+                name="record_id",
+                type=dynamo.AttributeType.STRING
+            ),
+            sort_key=dynamo.Attribute(
+                name="start_date",
                 type=dynamo.AttributeType.STRING
             ),
             removal_policy=RemovalPolicy.DESTROY  # Use RETAIN in production
         )
+        # GSI to query by recurrence and type
+        table_financials.add_global_secondary_index(
+            index_name="EmailIndex",
+            partition_key=dynamo.Attribute(
+                name="email",
+                type=dynamo.AttributeType.STRING
+            ),
+            sort_key=dynamo.Attribute(
+                name="start_date",
+                type=dynamo.AttributeType.STRING
+            ),
+            projection_type=dynamo.ProjectionType.ALL
+        )
+        
         # GSI to query by recurrence and type
         table_financials.add_global_secondary_index(
             index_name="RecurrenceTypeIndex",
@@ -100,7 +146,7 @@ class MyApiStack(Stack):
                 type=dynamo.AttributeType.STRING
             ),
             sort_key=dynamo.Attribute(
-                name="date",
+                name="start_date",
                 type=dynamo.AttributeType.STRING
             ),
             projection_type=dynamo.ProjectionType.ALL
@@ -114,8 +160,8 @@ class MyApiStack(Stack):
         # JWT secret in Secrets Manager
         jwt_secret = secretsmanager.Secret(
             self,
-            "JwtSecret",
-            secret_name=generate_name('jwt','dev','secret'),
+            "JwtSecretKey",
+            secret_name=generate_name('jwtkey','dev','secret'),
             description="JWT signing key for development",
             generate_secret_string=secretsmanager.SecretStringGenerator(
                 exclude_punctuation=True,
@@ -125,8 +171,8 @@ class MyApiStack(Stack):
         )
         jwt_refresh_secret = secretsmanager.Secret(
             self,
-            "JwtRefreshSecret",
-            secret_name=generate_name('jwt-refresh','dev','secret'),
+            "JwtRefreshSecretKey",
+            secret_name=generate_name('jwt-refresh-key','dev','secret'),
             description="JWT Refresh signing key for development",
             generate_secret_string=secretsmanager.SecretStringGenerator(
                 exclude_punctuation=True,
@@ -162,43 +208,54 @@ class MyApiStack(Stack):
         }
 
         
+        utils_layer = _lambda.LayerVersion(
+            self, "UtilsLayer",
+            code=_lambda.Code.from_asset("src/layer"),
+            compatible_runtimes=[_lambda.Runtime.PYTHON_3_12],
+            description="Shared utils"
+        )
         
-        
-        # --- Lambda functions ---
+        # # --- Lambda functions ---
         authorizer_lambda = _lambda.Function(
             self, generate_name('authorizer', 'dev', 'lambda'),
             runtime=_lambda.Runtime.PYTHON_3_12,
-            handler="handler.handler",
-            code=_lambda.Code.from_asset("api/authorizer"),
+            handler="handler.authorizer",
+            code=_lambda.Code.from_asset("src/authorizer"),
             environment=global_env,
-            role=shared_lambda_role,  
+            role=shared_lambda_role,
+            layers=[utils_layer]
         )
+        
+   
 
         auth_lambda = _lambda.Function(
             self, generate_name('auth', 'dev', 'lambda'),
             runtime=_lambda.Runtime.PYTHON_3_12,
-            handler="handler.handler",
-            code=_lambda.Code.from_asset("api/auth"),
+            handler="handler.lambda_handler",
+            code=_lambda.Code.from_asset("src/auth"),
             environment=global_env,
             role=shared_lambda_role,
+            layers=[utils_layer]
         )
 
         public_lambda = _lambda.Function(
             self, generate_name('public', 'dev', 'lambda'),
             runtime=_lambda.Runtime.PYTHON_3_12,
-            handler="handler.handler",
-            code=_lambda.Code.from_asset("api/public"),
+            handler="handler.lambda_handler",
+            code=_lambda.Code.from_asset("src/public"),
             environment=global_env,
             role=shared_lambda_role,
+            layers=[utils_layer]
         )
 
         private_lambda = _lambda.Function(
             self, generate_name('private', 'dev', 'lambda'),
             runtime=_lambda.Runtime.PYTHON_3_12,
-            handler="handler.handler",
-            code=_lambda.Code.from_asset("api/private"),
+            handler="handler.lambda_handler",
+            code=_lambda.Code.from_asset("src/private"),
             environment=global_env,
             role=shared_lambda_role,
+            layers=[utils_layer]
         )
         
 
@@ -210,13 +267,21 @@ class MyApiStack(Stack):
             endpoint_configuration=apigw.EndpointConfiguration(
                 types=[apigw.EndpointType.REGIONAL]
             ),
-            deploy_options=apigw.StageOptions(stage_name="dev")
+            deploy_options=apigw.StageOptions(stage_name="dev"),
+            default_cors_preflight_options=apigw.CorsOptions(
+                allow_origins=apigw.Cors.ALL_ORIGINS,  # or list of allowed origins
+                allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+                allow_headers=["Authorization", "Content-Type", "X-Amz-Date", "X-Api-Key", "X-Amz-Security-Token"],
+                max_age=Duration.seconds(3600)
+            )
         )
         
         # --- Create Lambda integrations ---
         public_integration = apigw.LambdaIntegration(public_lambda)
         private_integration = apigw.LambdaIntegration(private_lambda)
+        
         auth_integration = apigw.LambdaIntegration(auth_lambda)
+        
         
         # --- Define a Lambda authorizer ---
         token_authorizer = apigw.TokenAuthorizer(
@@ -225,6 +290,7 @@ class MyApiStack(Stack):
             handler=authorizer_lambda,
             identity_source=apigw.IdentitySource.header("Authorization")
         )
+        
 
         # /auth (for login/register)
         auth_resource = api.root.add_resource("auth")
@@ -236,13 +302,24 @@ class MyApiStack(Stack):
 
         # /private (protected route)
         private_resource = api.root.add_resource("private")
-        private_resource.add_method(
-            "GET",
+        proxy = private_resource.add_resource("{proxy+}")
+        proxy.add_method(
+            "ANY",
             private_integration,
             authorizer=token_authorizer,
-            authorization_type=apigw.AuthorizationType.CUSTOM
+            authorization_type=apigw.AuthorizationType.CUSTOM,
+            method_responses=[
+                apigw.MethodResponse(
+                    status_code="200",
+                    response_parameters={
+                        "method.response.header.Access-Control-Allow-Origin": True,
+                        "method.response.header.Access-Control-Allow-Headers": True,
+                        "method.response.header.Access-Control-Allow-Methods": True,
+                    },
+                )
+            ],
         )
-        
+
         
         
         # Output API URL

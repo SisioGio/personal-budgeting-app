@@ -2,7 +2,7 @@ import json
 import jwt
 from botocore.exceptions import ClientError
 import os
-from .utils import *
+from utils import *
 
 
 JWT_SECRET_NAME = os.environ.get("JWT_SECRET_NAME")
@@ -12,20 +12,21 @@ SECRET_KEY = get_secret(JWT_SECRET_NAME)
 
 def authorizer(event, context):
     print(event)
-    token = event['headers']['Authorization']
+    token = event['authorizationToken']
     try:
         token = token.split(' ')[-1]
         decoded = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
-        principal_id = decoded['id']
+        principal_id = decoded['email']
         
-        policy = generate_policy(principal_id, 'Allow', event['methodArn'])
+        policy = generate_policy(principal_id, 'Allow', event['methodArn'],context=decoded)
+        print(policy)
         return policy
     except jwt.ExpiredSignatureError:
         raise Exception('Token Expired')  # Token has expired
     except jwt.InvalidTokenError:
         raise Exception('Unauthorized')  # Invalid token
 
-def generate_policy(principal_id, effect, resource):
+def generate_policy(principal_id, effect, resource,context=None):
     policy = {
         'principalId': principal_id,
         'policyDocument': {
@@ -39,4 +40,9 @@ def generate_policy(principal_id, effect, resource):
             ]
         }
     }
+    if context:
+        # Must be all strings, numbers, or booleans
+        sanitized_context = {k: str(v) for k, v in context.items()}
+        policy['context'] = sanitized_context
+
     return policy

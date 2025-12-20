@@ -1,4 +1,4 @@
-def handler(event, context):
+def lambda_handler(event, context):
     # Simple test Lambda handler
     return {
         "statusCode": 200,
