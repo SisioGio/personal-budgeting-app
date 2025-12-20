@@ -25,7 +25,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # If using Python CDK
+      - name: Create Layer
+        working-directory: backend
+        run: |
+          pip install -r src/requirements.txt -t layer/python
+
+
       - name: Install CDK
         run: npm install -g aws-cdk
 
