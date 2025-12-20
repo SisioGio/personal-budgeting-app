@@ -14,6 +14,7 @@ class InfraStack(Stack):
             "FrontendBucket",
             website_index_document="index.html",
             website_error_document="index.html",
+            block_public_access=s3.BlockPublicAccess.BLOCK_ACLS,
             public_read_access=True
         )
 
