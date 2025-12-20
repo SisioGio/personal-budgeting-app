@@ -1,4 +1,4 @@
-name: Deploy Backend (Python)
+name: Deploy Backend
 
 on:
   push:
