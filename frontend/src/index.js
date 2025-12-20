@@ -13,13 +13,12 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
 
     <BrowserRouter>
-    <AuthProvider>
-    <NotificationProvider>
-    <App />
-    </NotificationProvider>
-    </AuthProvider>
-
-  </BrowserRouter>
+        <AuthProvider>
+          <NotificationProvider>
+              <App />
+          </NotificationProvider>
+        </AuthProvider>
+    </BrowserRouter>
 
 
 );

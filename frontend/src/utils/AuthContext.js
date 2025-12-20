@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState,useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { jwtDecode } from 'jwt-decode';
 const AuthContext = createContext();
 
@@ -7,32 +7,33 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [auth, setAuth] = useState(localStorage.getItem('accessToken')?true:false);
+  const [auth, setAuth] = useState(null);
 
-  const decodeAccessToken = (token)=>{
-  
-    const decoded = jwtDecode(token);
+  const decodeAccessToken = useCallback((token) => {
+    try {
+      return jwtDecode(token);
+    } catch (error) {
+      console.error('Invalid token:', error);
+      return null;
+    }
+  }, []);
+  const login = useCallback((token) => {
+    try {
+      const userData = decodeAccessToken(token);
 
-      return decoded
-  }
-  const login = (token) => {
-   
-    // Implement login logic
-    try{
-      const userData = decodeAccessToken(token)
-    
-      const api_key = userData.api_key
-      if (api_key){
- 
-        localStorage.setItem('api_key',api_key)
+      if (!userData) return;
+
+      const api_key = userData.api_key;
+      if (api_key) {
+        localStorage.setItem('api_key', api_key);
       }
+      localStorage.setItem('accessToken', token);
       setAuth(userData);
-    }catch (error) {
-        console.error(error);
-        setAuth(null);
-      
-    } 
-  };
+    } catch (error) {
+      console.error(error);
+      setAuth(null);
+    }
+  }, [decodeAccessToken]);
 
   const logout = () => {
     // Implement logout logic
@@ -43,12 +44,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    
-    if (token) {
-      login(token)
-    }
-  }, []);
+  if (typeof window === 'undefined') return;
+  const token = localStorage.getItem('accessToken');
+  if (token) login(token);
+  else setAuth(false);
+}, [login]);
 
   return (
     <AuthContext.Provider value={{ auth, login, logout }}>

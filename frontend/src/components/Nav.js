@@ -1,9 +1,7 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import { useAuth } from "../utils/AuthContext";
 
 const MainNav = () => {
-  const { logout, auth } = useAuth();
+
   const [isOpen, setIsOpen] = useState(false);
 
   const handleLinkClick = () => {

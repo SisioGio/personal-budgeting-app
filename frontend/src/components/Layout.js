@@ -1,14 +1,11 @@
-import React from "react";
-import { motion } from 'framer-motion';
-import MainNav from './mainNav';
-import { FaTwitter, FaFacebook, FaLinkedin, FaInstagram, FaArrowUp } from 'react-icons/fa';
-import CookieBanner from "./CookieBanner";
-import NewsletterPopup from "./NewsLetterPopUp";
+
+import Nav from './Nav';
+
 const Layout = ({ children }) => {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-tr from-blue-50 to-white ">
     <div id='header' >
-    <MainNav/>
+    <Nav/>
     </div>
   
   
