@@ -8,7 +8,7 @@ const AccountConfirmation = () => {
   const [confirmationStatus, setConfirmationStatus] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [email, setEmail] = useState('');
-  const [emailSent, setEmailSent] = useState(false); // To track if email was sent
+  const [emailSent, setEmailSent] = useState(false);
 
   const location = useLocation();
 

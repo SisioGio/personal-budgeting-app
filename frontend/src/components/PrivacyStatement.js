@@ -1,12 +1,6 @@
-import React, { useState } from 'react';
+
 
 const PrivacyStatement = () => {
-  const [isVisible, setIsVisible] = useState(false);
-
-  // Function to toggle the visibility of the privacy statement
-  const toggleVisibility = () => {
-    setIsVisible(!isVisible);
-  };
 
   return (
     <div>

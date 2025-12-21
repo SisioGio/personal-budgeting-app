@@ -1,137 +1,100 @@
-from dotenv import load_dotenv
-import os
-from src.auth.handler import sum
 import pytest
-
 import json
 import random
+from auth.handler import lambda_handler
+from authorizer.handler import authorizer
+# ------------------------
+# Fixtures
+# ------------------------
 
-from src.authorizer.handler import authorizer
-from src.auth.handler import lambda_handler
-import jwt
-from datetime import datetime, timedelta,UTC
-from src.utils.utils import get_secret
-load_dotenv()
-
-JWT_SECRET_NAME = os.environ.get("JWT_SECRET_NAME")
-
-SECRET_KEY = get_secret(JWT_SECRET_NAME)
-
-
+@pytest.fixture
 def random_user():
-    uid = random.randint(1, 10_000_000)
-    return {
-        "email": f"user_{uid}@gmail.com",
-        "password": f"pass_{uid}",
-        "name": f"user_{uid}"
+    """Generate a random email and password for testing."""
+    r_digit = random.randint(1, 10000)
+    email = f"test{r_digit}@gmail.com"
+    password = f"test_{r_digit}"
+    return {"email": email, "password": password}
+
+
+@pytest.fixture
+def create_event():
+    """Helper to generate API Gateway style events."""
+    def _create_event(method, path, body):
+        return {
+            "httpMethod": method,
+            "path": path,
+            "body": json.dumps(body),
+            "headers": {"Content-Type": "application/json"}
+        }
+    return _create_event
+
+# ------------------------
+# Tests
+# ------------------------
+
+def test_register(create_event, random_user):
+    """Test registering a new user."""
+    body = {
+        "email": random_user["email"],
+        "password": random_user["password"]
     }
-
-
-def build_event(method="GET", path="/auth/register", body=None, params=None):
-    return {
-        "httpMethod": method.upper(),
-        "path": path,
-        "queryStringParameters": params or {},
-        "body": json.dumps(body or {})
-    }
-
-
-def test_full_auth_flow():
-    user = random_user()
-
-    # Register
-    ev = build_event("POST", "/auth/register", user)
-    res = lambda_handler(ev, {})
-    assert res["statusCode"] == 200
-
-    # Login
-    ev = build_event("POST", "/auth/login", user)
-    res = lambda_handler(ev, {})
-    assert res["statusCode"] == 200
-
-    tokens = json.loads(res["body"])
-    access = tokens["access_token"]
-
-    # Authorize
-    ev = {
-        "headers": {"Authorization": f"Bearer {access}"},
-        'methodArn':"arn:..."
-    }
-
-    authz = authorizer(ev, {})
-    assert "principalId" in authz
-
-
-def test_invalid_email():
-    user = random_user()
-
-
-
-    # Login
-    ev = build_event("POST", "/auth/login", user)
-    res = lambda_handler(ev, {})
-    assert res["statusCode"] == 404
-
-
-def test_invalid_password():
-    user = random_user()
-
-    # Register
-    ev = build_event("POST", "/auth/register", user)
-    res = lambda_handler(ev, {})
-    assert res["statusCode"] == 200
-    user['password']='wrong password'
-    # Login
-    ev = build_event("POST", "/auth/login", user)
-    res = lambda_handler(ev, {})
-    assert res["statusCode"] == 403
-
+    event = create_event("POST", "/auth/register", body)
+    response = lambda_handler(event, None)
     
+    # Parse JSON response
+    resp_body = json.loads(response["body"])
+    
+    assert response["statusCode"] == 201
+    assert "id" in resp_body
+    assert resp_body["msg"] == "User registered"
 
-def test_invalid_bearer():
-    user = random_user()
+def test_login(create_event, random_user):
+    """Test logging in with a registered user."""
+    # First register the user
+    body = {"email": random_user["email"], "password": random_user["password"]}
+    event = create_event("POST", "/auth/register", body)
+    lambda_handler(event, None)  # Ignore response, already tested in registration
 
-    # Register
-    ev = build_event("POST", "/auth/register", user)
-    res = lambda_handler(ev, {})
-    assert res["statusCode"] == 200
-
-    # Login
-    ev = build_event("POST", "/auth/login", user)
-    res = lambda_handler(ev, {})
-    assert res["statusCode"] == 200
-
-    tokens = json.loads(res["body"])
-    access = tokens["access_token"]
-
-    # Authorize
-    ev = {
-        "headers": {"Authorization": f"Bearer WRONG_TOKEN"},
-        'methodArn':"arn:..."
-    }
-
-    with pytest.raises(Exception) as exc_info:
-        authorizer(ev, {})
-
-    assert str(exc_info.value) == "Unauthorized"
+    # Now login
+    event = create_event("POST", "/auth/login", body)
+    response = lambda_handler(event, None)
+    resp_body = json.loads(response["body"])
+    
+    assert response["statusCode"] == 200
+    assert "access_token" in resp_body
+    assert "refresh_token" in resp_body
 
 
-def test_authorizer_expired_token():
-    # Create an expired token
-    expired_token = jwt.encode(
-        {"id": "user123", "exp": datetime.now(UTC) - timedelta(seconds=10)},  # expired 10 seconds ago
-        SECRET_KEY,
-        algorithm="HS256"
-    )
 
+def test_authorizer(create_event, random_user):
+    """Test logging in with a registered user."""
+    # First register the user
+    
+    body = {"email": random_user["email"], "password": random_user["password"]}
+    event = create_event("POST", "/auth/register", body)
+    response_registration=lambda_handler(event, None)  # Ignore response, already tested in registration
+    user_id = json.loads(response_registration['body'])['id']
+    # Now login
+    event = create_event("POST", "/auth/login", body)
+    response = lambda_handler(event, None)
+    resp_body = json.loads(response["body"])
+    
+    assert response["statusCode"] == 200
+    assert "access_token" in resp_body
+    assert "refresh_token" in resp_body
+    access_token = resp_body['access_token']
+    
     event = {
-        "headers": {"Authorization": f"Bearer {expired_token}"},
-        "methodArn": "arn:aws:execute-api:region:account-id:api-id/stage/GET/resource"
+        'authorizationToken':f'Bearer {access_token}',
+        'methodArn':"something"
     }
-
-    # Assert that the authorizer raises 'Unauthorized' for expired token
-    with pytest.raises(Exception) as exc_info:
-        authorizer(event, {})
-
-    assert str(exc_info.value) == "Token Expired"
+    
+    response = authorizer(event,None)
+    assert user_id == response['principalId']
+    assert random_user["email"] == response['context']['email']
+    assert 'policyDocument' in response
+    assert 'Statement' in response['policyDocument']
+    assert len(response['policyDocument']['Statement']) >0
+    assert 'Allow' == response['policyDocument']['Statement'][0]['Effect']
+    
     

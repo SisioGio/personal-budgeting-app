@@ -2,12 +2,13 @@ import json
 import jwt
 from botocore.exceptions import ClientError
 import os
-from utils import *
+from dotenv import load_dotenv
+
+load_dotenv()
+
+JWT_SECRET = os.environ.get("JWT_SECRET")
 
 
-JWT_SECRET_NAME = os.environ.get("JWT_SECRET_NAME")
-
-SECRET_KEY = get_secret(JWT_SECRET_NAME)
 
 
 def authorizer(event, context):
@@ -15,9 +16,8 @@ def authorizer(event, context):
     token = event['authorizationToken']
     try:
         token = token.split(' ')[-1]
-        decoded = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
-        principal_id = decoded['email']
-        
+        decoded = jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
+        principal_id = decoded['id']
         policy = generate_policy(principal_id, 'Allow', event['methodArn'],context=decoded)
         print(policy)
         return policy
