@@ -263,6 +263,45 @@ class MyApiStack(Stack):
             layers=[utils_layer,common_layer]
         )
         
+        actuals_lambda = _lambda.Function(
+            self, generate_name('actuals', 'dev', 'lambda'),
+            runtime=_lambda.Runtime.PYTHON_3_12,
+            handler="handler.lambda_handler",
+            code=_lambda.Code.from_asset("src/actuals"),
+            environment=global_env,
+            role=shared_lambda_role,
+            layers=[utils_layer,common_layer]
+        )
+        
+        category_lambda = _lambda.Function(
+            self, generate_name('category', 'dev', 'lambda'),
+            runtime=_lambda.Runtime.PYTHON_3_12,
+            handler="handler.lambda_handler",
+            code=_lambda.Code.from_asset("src/category"),
+            environment=global_env,
+            role=shared_lambda_role,
+            layers=[utils_layer,common_layer]
+        )
+        
+        entries_lambda = _lambda.Function(
+            self, generate_name('entries', 'dev', 'lambda'),
+            runtime=_lambda.Runtime.PYTHON_3_12,
+            handler="handler.lambda_handler",
+            code=_lambda.Code.from_asset("src/entries"),
+            environment=global_env,
+            role=shared_lambda_role,
+            layers=[utils_layer,common_layer]
+        )
+        scenario_lambda = _lambda.Function(
+            self, generate_name('scenario', 'dev', 'lambda'),
+            runtime=_lambda.Runtime.PYTHON_3_12,
+            handler="handler.lambda_handler",
+            code=_lambda.Code.from_asset("src/scenario"),
+            environment=global_env,
+            role=shared_lambda_role,
+            layers=[utils_layer,common_layer]
+        )
+        
 
         # --- Create the API Gateway ---
         api = apigw.RestApi(
@@ -274,7 +313,7 @@ class MyApiStack(Stack):
             ),
             deploy_options=apigw.StageOptions(stage_name="dev"),
             default_cors_preflight_options=apigw.CorsOptions(
-                allow_origins=apigw.Cors.ALL_ORIGINS,  # or list of allowed origins
+                allow_origins=apigw.Cors.ALL_ORIGINS, 
                 allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
                 allow_headers=["Authorization", "Content-Type", "X-Amz-Date", "X-Api-Key", "X-Amz-Security-Token"],
                 max_age=Duration.seconds(3600)
@@ -284,7 +323,10 @@ class MyApiStack(Stack):
         # --- Create Lambda integrations ---
         public_integration = apigw.LambdaIntegration(public_lambda)
         private_integration = apigw.LambdaIntegration(private_lambda)
-        
+        actuals_integration = apigw.LambdaIntegration(actuals_lambda)
+        category_integration = apigw.LambdaIntegration(category_lambda)
+        entries_integration = apigw.LambdaIntegration(entries_lambda)
+        scenario_integration = apigw.LambdaIntegration(scenario_lambda)
         auth_integration = apigw.LambdaIntegration(auth_lambda)
         
         
@@ -299,11 +341,43 @@ class MyApiStack(Stack):
 
         # /auth (for login/register)
         auth_resource = api.root.add_resource("auth")
-        auth_resource.add_method("POST", auth_integration)  # public
+        proxy = auth_resource.add_resource("{proxy+}")
+        proxy.add_method(
+            "ANY",
+            auth_integration,
+            method_responses=[
+                apigw.MethodResponse(
+                    status_code="200",
+                    response_parameters={
+                        "method.response.header.Access-Control-Allow-Origin": True,
+                        "method.response.header.Access-Control-Allow-Headers": True,
+                        "method.response.header.Access-Control-Allow-Methods": True,
+                    },
+                )
+            ],
+        )
+        
         
         # /public (unprotected route)
         public_resource = api.root.add_resource("public")
-        public_resource.add_method("GET", public_integration)  # no auth
+        proxy = public_resource.add_resource("{proxy+}")
+        
+        proxy.add_method(
+            "ANY",
+            public_integration,
+            authorizer=token_authorizer,
+            authorization_type=apigw.AuthorizationType.CUSTOM,
+            method_responses=[
+                apigw.MethodResponse(
+                    status_code="200",
+                    response_parameters={
+                        "method.response.header.Access-Control-Allow-Origin": True,
+                        "method.response.header.Access-Control-Allow-Headers": True,
+                        "method.response.header.Access-Control-Allow-Methods": True,
+                    },
+                )
+            ],
+        )
 
         # /private (protected route)
         private_resource = api.root.add_resource("private")
@@ -311,6 +385,88 @@ class MyApiStack(Stack):
         proxy.add_method(
             "ANY",
             private_integration,
+            authorizer=token_authorizer,
+            authorization_type=apigw.AuthorizationType.CUSTOM,
+            method_responses=[
+                apigw.MethodResponse(
+                    status_code="200",
+                    response_parameters={
+                        "method.response.header.Access-Control-Allow-Origin": True,
+                        "method.response.header.Access-Control-Allow-Headers": True,
+                        "method.response.header.Access-Control-Allow-Methods": True,
+                    },
+                )
+            ],
+        )
+        
+        
+        # /actuals (protected route)
+        actuals_resource = api.root.add_resource("actuals")
+        proxy = actuals_resource.add_resource("{proxy+}")
+        proxy.add_method(
+            "ANY",
+            actuals_integration,
+            authorizer=token_authorizer,
+            authorization_type=apigw.AuthorizationType.CUSTOM,
+            method_responses=[
+                apigw.MethodResponse(
+                    status_code="200",
+                    response_parameters={
+                        "method.response.header.Access-Control-Allow-Origin": True,
+                        "method.response.header.Access-Control-Allow-Headers": True,
+                        "method.response.header.Access-Control-Allow-Methods": True,
+                    },
+                )
+            ],
+        )
+        
+        # /category (protected route)
+        category_resource = api.root.add_resource("category")
+        proxy = category_resource.add_resource("{proxy+}")
+        proxy.add_method(
+            "ANY",
+            category_integration,
+            authorizer=token_authorizer,
+            authorization_type=apigw.AuthorizationType.CUSTOM,
+            method_responses=[
+                apigw.MethodResponse(
+                    status_code="200",
+                    response_parameters={
+                        "method.response.header.Access-Control-Allow-Origin": True,
+                        "method.response.header.Access-Control-Allow-Headers": True,
+                        "method.response.header.Access-Control-Allow-Methods": True,
+                    },
+                )
+            ],
+        )
+        
+        # /entries (protected route)
+        entries_resource = api.root.add_resource("entries")
+        proxy = entries_resource.add_resource("{proxy+}")
+        proxy.add_method(
+            "ANY",
+            entries_integration,
+            authorizer=token_authorizer,
+            authorization_type=apigw.AuthorizationType.CUSTOM,
+            method_responses=[
+                apigw.MethodResponse(
+                    status_code="200",
+                    response_parameters={
+                        "method.response.header.Access-Control-Allow-Origin": True,
+                        "method.response.header.Access-Control-Allow-Headers": True,
+                        "method.response.header.Access-Control-Allow-Methods": True,
+                    },
+                )
+            ],
+        )
+        
+        
+        # /scenario (protected route)
+        scenario_resource = api.root.add_resource("scenario")
+        proxy = scenario_resource.add_resource("{proxy+}")
+        proxy.add_method(
+            "ANY",
+            scenario_integration,
             authorizer=token_authorizer,
             authorization_type=apigw.AuthorizationType.CUSTOM,
             method_responses=[
