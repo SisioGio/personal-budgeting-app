@@ -31,11 +31,11 @@ def get_category(event):
 def update_category(event):
     user_id = event['requestContext']['authorizer']['principalId']
     body = json.loads(event.get('body', '{}'))
-    category_id = body.get('category_id')
+    id = body.get('id')
     name = body.get('name')
 
-    if not category_id:
-        return generate_response(400, {"msg": "'category_id' is required to update a category."})
+    if not id:
+        return generate_response(400, {"msg": "'id' is required to update a category."})
 
     query = """
         UPDATE category
@@ -43,7 +43,7 @@ def update_category(event):
         WHERE user_id = %s AND id = %s
         RETURNING *
     """
-    result = execute_query(query, (name, user_id, name))
+    result = execute_query(query, (name, user_id, id))
     if not result:
         return generate_response(404, {"msg": "Category not found."})
 
@@ -69,13 +69,13 @@ def create_category(event):
 def delete_category(event):
     user_id = event['requestContext']['authorizer']['principalId']
     body = json.loads(event.get('body', '{}'))
-    category_id = body.get('category_id')
+    id = body.get('id')
 
-    if not category_id:
+    if not id:
         return generate_response(400, {"msg": "'id' is required to delete a category."})
 
     query = "DELETE FROM category WHERE user_id = %s AND id = %s RETURNING *"
-    result = execute_query(query, (user_id, category_id))
+    result = execute_query(query, (user_id, id))
 
     if not result:
         return generate_response(404, {"msg": "category not found."})

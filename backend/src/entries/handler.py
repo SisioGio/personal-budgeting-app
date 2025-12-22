@@ -34,7 +34,7 @@ def create_entry(event):
 
     required_fields = [
         "name", "type", "frequency",
-        "start_date", "amount", "scenario_id"
+        "start_date", "amount", "scenario_id",'category_id'
     ]
 
     for field in required_fields:
@@ -48,8 +48,8 @@ def create_entry(event):
 
     query = """
         INSERT INTO entries
-        (user_id, name, type, frequency, start_date, end_date, amount, scenario_id)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        (user_id, name, type, frequency, start_date, end_date, amount, scenario_id,category_id)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s,%s)
         RETURNING *
     """
     params = (
@@ -61,6 +61,7 @@ def create_entry(event):
         body.get("end_date"),
         body["amount"],
         body["scenario_id"],
+        body['category_id']
     )
 
     result = execute_query(query, params, commit=True)

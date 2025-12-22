@@ -6,6 +6,7 @@ from auth.handler import lambda_handler as auth_handler
 from scenario.handler import lambda_handler as scenario_handler
 from entries.handler import lambda_handler as entries_handler
 from category.handler import lambda_handler as category_handler
+from actuals.handler import lambda_handler as actual_handler
 # ------------------------
 # Fixtures
 # ------------------------
@@ -91,10 +92,6 @@ def test_create_category(create_event, shared_state, test_user):
     shared_state["category_name"] = resp_body["data"][0]["name"]
 
 
-# ------------------------
-# Entries tests
-# ------------------------
-
 def test_create_entry(create_event, shared_state, test_user):
     body = {
         "name": "Salary",
@@ -116,43 +113,62 @@ def test_create_entry(create_event, shared_state, test_user):
     shared_state["entry_id"] = resp_body["data"][0]["id"]
 
 
+
+def test_create_actuals(create_event, shared_state, test_user):
+    body = {'entry_id':shared_state['entry_id'],
+            "amount": 100,
+            'actual_date':'2025-12-22',
+            'type':'expense',
+            'category_id':shared_state['category_id'],
+            'commeent':'Weekend'}
+    
+    event = create_event("POST", "/actual", body, user_id=test_user["id"])
+
+    response = actual_handler(event, None)
+    resp_body = json.loads(response["body"])
+    print(resp_body)
+    assert response["statusCode"] == 201
+    shared_state["actual_id"] = resp_body["data"][0]["id"]
+    
+    
+
+
 def test_get_entries(create_event, shared_state, test_user):
     event = create_event(
         "GET",
-        "/entries",
+        "/actual",
         body={},
-        user_id=test_user["id"],
-        qs={"scenario_id": shared_state["scenario_id"]}
+        user_id=test_user["id"]
     )
 
-    response = entries_handler(event, None)
+    response = actual_handler(event, None)
     resp_body = json.loads(response["body"])
 
     assert response["statusCode"] == 200
     assert isinstance(resp_body["data"], list)
-    assert any(e["id"] == shared_state["entry_id"] for e in resp_body["data"])
+    assert len(resp_body["data"])>0
 
 
-def test_update_entry(create_event, shared_state, test_user):
+def test_update_actual(create_event, shared_state, test_user):
     body = {
-        "id": shared_state["entry_id"],
-        "amount": 5500
+        "id": shared_state["actual_id"],
+        "amount": 120
     }
 
-    event = create_event("PUT", "/entries", body, user_id=test_user["id"])
-    response = entries_handler(event, None)
+    event = create_event("PUT", "/actual", body, user_id=test_user["id"])
+    response = actual_handler(event, None)
     resp_body = json.loads(response["body"])
 
     assert response["statusCode"] == 200
-    assert resp_body["data"][0]["amount"] == 5500
+    assert resp_body["data"][0]["amount"] == 120
 
 
-def test_delete_entry(create_event, shared_state, test_user):
-    body = {"id": shared_state["entry_id"]}
-    event = create_event("DELETE", "/entries", body, user_id=test_user["id"])
+def test_delete_actual(create_event, shared_state, test_user):
+    body = {"id": shared_state["actual_id"]}
+    event = create_event("DELETE", "/actual", body, user_id=test_user["id"])
 
-    response = entries_handler(event, None)
+    response = actual_handler(event, None)
     resp_body = json.loads(response["body"])
 
     assert response["statusCode"] == 200
-    assert resp_body["msg"] == "Entry deleted"
+    assert resp_body["msg"] == "Actual deleted"

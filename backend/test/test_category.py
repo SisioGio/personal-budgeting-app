@@ -101,17 +101,17 @@ def test_update_entry(create_event, shared_state, test_user):
     event = create_event("PUT", "/category", body, user_id=test_user["id"])
     response = category_handler(event, None)
     resp_body = json.loads(response["body"])
-
+    print(resp_body)
     assert response["statusCode"] == 200
-    assert resp_body["data"][0]["category"] == 'Salary'
+    assert resp_body["data"][0]["name"] == 'Salary'
 
 
 def test_delete_entry(create_event, shared_state, test_user):
     body = {"id": shared_state["category_id"]}
-    event = create_event("DELETE", "/entries", body, user_id=test_user["id"])
+    event = create_event("DELETE", "/category", body, user_id=test_user["id"])
 
     response = category_handler(event, None)
     resp_body = json.loads(response["body"])
 
     assert response["statusCode"] == 200
-    assert resp_body["msg"] == "Entry deleted"
+    assert resp_body["msg"] == "category deleted"

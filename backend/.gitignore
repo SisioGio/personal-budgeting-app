@@ -24,6 +24,7 @@ yarn-error.log*
 
 
 .env
+.venv
 *demo_functions*
 
 *__pycache__*
