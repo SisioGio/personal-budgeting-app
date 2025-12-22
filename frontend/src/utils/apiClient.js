@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-  baseURL: 'https://wz5kei0mz0.execute-api.eu-central-1.amazonaws.com/prod/architetto/api/',
+  baseURL: 'https://5uovigzzsf.execute-api.eu-central-1.amazonaws.com/dev/',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -9,7 +9,7 @@ const apiClient = axios.create({
 
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('bnb-demo-accessToken');
+    const token = localStorage.getItem('access-token');
     
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
@@ -27,7 +27,7 @@ apiClient.interceptors.response.use(
   async (error) => {
     if (error.response && error.response.status === 403) {
       // Token expired or unauthorized
-      const refreshToken = localStorage.getItem('bnb-demo-refreshToken');
+      const refreshToken = localStorage.getItem('refresh-token');
       console.log("Refresh token:", refreshToken);
       if (refreshToken) {
         try {
@@ -43,8 +43,8 @@ apiClient.interceptors.response.use(
               const response = await apiClient.post('/auth/refresh', { refreshToken });
               
               // Store the new access and refresh tokens
-              localStorage.setItem('bnb-demo-accessToken', response.data.access_token);
-              localStorage.setItem('bnb-demo-refreshToken', response.data.refreshToken);
+              localStorage.setItem('access-token', response.data.access_token);
+              localStorage.setItem('refresh-token', response.data.refresh_token);
                 
               // Retry the original request with the new access token
               error.config.headers['Authorization'] = `Bearer ${response.data.access_token}`;
@@ -57,16 +57,16 @@ apiClient.interceptors.response.use(
           }
 
           // If we reached max retries and still failed, log the user out
-          localStorage.removeItem('bnb-demo-accessToken');
-          localStorage.removeItem('bnb-demo-refreshToken');
+          localStorage.removeItem('access-token');
+          localStorage.removeItem('refresh-token');
           window.location.href = "/login"; // Redirect to login page
           
         } catch (refreshError) {
           // Handle if refresh token request fails (network error, etc.)
           console.error("Refresh token failed", refreshError);
           // Log out user and redirect to login
-          localStorage.removeItem('bnb-demo-accessToken');
-          localStorage.removeItem('bnb-demo-refreshToken');
+          localStorage.removeItem('access-token');
+          localStorage.removeItem('refresh-token');
           window.location.href = "/login"; // Redirect to login page
         }
       } else {

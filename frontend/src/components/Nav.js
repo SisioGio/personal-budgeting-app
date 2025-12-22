@@ -9,7 +9,7 @@ const MainNav = () => {
   };
 
   return (
-    <nav className="custom-gradient-nav fixed top-0 left-0 w-full shadow-xl h-20 z-50 rounded-b-md bg-blue-600 bg-opacity-90 backdrop-blur-md transition-all duration-300 ease-in-out">
+    <nav className="custom-gradient-nav fixed top-0 left-0 w-full shadow-xl h-20 z-50 rounded-b-md bg-indigo-800 backdrop-blur-md transition-all duration-300 ease-in-out">
       <div className=" mx-auto flex justify-around items-center px-6 h-full">
         {/* Logo */}
         <a

@@ -3,7 +3,7 @@ import Nav from './Nav';
 
 const Layout = ({ children }) => {
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-tr from-blue-50 to-white ">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-indigo-900 via-purple-800 to-fuchsia-900">
     <div id='header' >
     <Nav/>
     </div>
