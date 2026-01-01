@@ -12,7 +12,10 @@ config = {
     'DB_USER':db_user,
     'DB_PASSWORD':db_password
 }
-MyApiStack(app, "TemplateServerlessApp",config=config)
+MyApiStack(app, "TemplateServerlessApp",
+    db_host=db_host,
+    db_user=db_user,
+    db_password=db_password,)
 
 
 app.synth()

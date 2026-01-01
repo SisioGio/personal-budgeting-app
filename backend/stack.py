@@ -15,7 +15,7 @@ from aws_cdk import Duration
 def generate_name(name,env,type):
     return f"{name}-{env}-{type}"
 class MyApiStack(Stack):
-    def __init__(self, scope: Construct, construct_id: str, config,**kwargs):
+    def __init__(self, scope: Construct, construct_id: str, db_host,db_user,db_password,**kwargs):
         super().__init__(scope, construct_id, **kwargs)
 
         
@@ -204,9 +204,9 @@ class MyApiStack(Stack):
             "JWT_EXPIRATION":"3600",
             "ACCESS_TOKEN_EXPIRATION":"3600",
             "APP_NAME":"MyFinancialAdvisor",
-            "DB_USER":config['DB_USER'],
-            "DB_PASSWORD":config['DB_PASSWORD'],
-            "DB_HOST":config['DB_HOST'],
+            "DB_USER":db_user,
+            "DB_PASSWORD":db_password,
+            "DB_HOST":db_host,
             "DB_NAME":'budget',
             "DB_PORT":'5432'
             
