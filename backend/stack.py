@@ -30,131 +30,6 @@ class MyApiStack(Stack):
 
 
 
-        # Db table for users
-        table_users = dynamo.Table(self,generate_name('users','dev','table'),
-                                   table_name=generate_name('users','dev','table'),
-                                   partition_key=dynamo.Attribute(
-                                        name="email",
-                                        type=dynamo.AttributeType.STRING
-                                    ))
-        table_actuals = dynamo.Table(
-            self,
-            generate_name('actuals', 'dev', 'table'),
-            table_name=generate_name('actuals', 'dev', 'table'),
-            partition_key=dynamo.Attribute(
-                name="record_id",
-                type=dynamo.AttributeType.STRING
-            ),
-            sort_key=dynamo.Attribute(
-                name="date",
-                type=dynamo.AttributeType.STRING
-            ),
-            removal_policy=RemovalPolicy.DESTROY
-        )
-        
-        # GSI to query by email
-        table_actuals.add_global_secondary_index(
-            index_name="EmailIndex",
-            partition_key= dynamo.Attribute(
-                name="email",
-                type=dynamo.AttributeType.STRING
-            ),
-            sort_key=dynamo.Attribute(
-                name="date",
-                type=dynamo.AttributeType.STRING
-            ),
-            projection_type=dynamo.ProjectionType.ALL
-        )
-        
-        table_forecasts = dynamo.Table(
-            self,
-            generate_name('forecast', 'dev', 'table'),  # CDK logical ID
-            table_name=generate_name('forecast', 'dev', 'table'),  # actual table name
-            partition_key=dynamo.Attribute(
-                name="record_id",
-                type=dynamo.AttributeType.STRING
-            ),
-            sort_key=dynamo.Attribute(
-                name="forecast_id",
-                type=dynamo.AttributeType.STRING  # or NUMBER if it’s a timestamp
-            ),
-            removal_policy=RemovalPolicy.DESTROY  # optional, for dev environment
-        )
-        # GSI to query by email
-        table_forecasts.add_global_secondary_index(
-            index_name="EmailIndex",
-            partition_key=dynamo.Attribute(
-                name="email",
-                type=dynamo.AttributeType.STRING
-            ),
-            sort_key=dynamo.Attribute(
-                name="forecast_id",
-                type=dynamo.AttributeType.STRING
-            ),
-            projection_type=dynamo.ProjectionType.ALL
-        )
-        
-        
-        
-        # Main DynamoDB table
-        table_financials = dynamo.Table(
-            self,
-            "FinancialsTable",
-            table_name="financialsdt-dev",
-            partition_key=dynamo.Attribute(
-                name="record_id",
-                type=dynamo.AttributeType.STRING
-            ),
-            sort_key=dynamo.Attribute(
-                name="start_date",
-                type=dynamo.AttributeType.STRING
-            ),
-            removal_policy=RemovalPolicy.DESTROY  # Use RETAIN in production
-        )
-        # GSI to query by recurrence and type
-        table_financials.add_global_secondary_index(
-            index_name="EmailIndex",
-            partition_key=dynamo.Attribute(
-                name="email",
-                type=dynamo.AttributeType.STRING
-            ),
-            sort_key=dynamo.Attribute(
-                name="start_date",
-                type=dynamo.AttributeType.STRING
-            ),
-            projection_type=dynamo.ProjectionType.ALL
-        )
-        
-        # GSI to query by recurrence and type
-        table_financials.add_global_secondary_index(
-            index_name="RecurrenceTypeIndex",
-            partition_key=dynamo.Attribute(
-                name="recurrence",
-                type=dynamo.AttributeType.STRING
-            ),
-            sort_key=dynamo.Attribute(
-                name="type",
-                type=dynamo.AttributeType.STRING
-            ),
-            projection_type=dynamo.ProjectionType.ALL
-        )
-        # Another optional GSI: category-based queries
-        table_financials.add_global_secondary_index(
-            index_name="CategoryIndex",
-            partition_key=dynamo.Attribute(
-                name="category",
-                type=dynamo.AttributeType.STRING
-            ),
-            sort_key=dynamo.Attribute(
-                name="start_date",
-                type=dynamo.AttributeType.STRING
-            ),
-            projection_type=dynamo.ProjectionType.ALL
-        )
-
-        # You can now use table_financials in Lambda or other services
-        self.table_financials = table_financials
-
         
         
         # JWT secret in Secrets Manager
@@ -183,10 +58,7 @@ class MyApiStack(Stack):
         # db secret name
         db_secret = secretsmanager.Secret.from_secret_name_v2(self,"DbSecretName","rds!db-efc52989-89c8-4009-a2c3-e211a33ba1bd")
         
-        
-        # Give that role access to DynamoDB tables
-        for table in [table_users, table_actuals, table_financials,table_forecasts]:
-            table.grant_read_write_data(shared_lambda_role)
+
             
         # Grant read access to secrets
         for secret in [jwt_secret,jwt_refresh_secret,db_secret]:
@@ -197,10 +69,6 @@ class MyApiStack(Stack):
         global_env = {
             "JWT_SECRET_NAME": jwt_secret.secret_arn,
             "REFRESH_SECRET_NAME":jwt_refresh_secret.secret_arn,
-            "TABLE_USERS": table_users.table_name,
-            "TABLE_ACTUALS": table_actuals.table_name,
-            "TABLE_FINANCIALS": table_financials.table_name,
-            "TABLE_FORECAST":table_forecasts.table_name,
             "ENVIRONMENT": "dev",
             "FRONTEND_BASE_URL":"https://localhost:3000/",
             "JWT_EXPIRATION":"3600",
@@ -500,16 +368,13 @@ class MyApiStack(Stack):
         
         
         resources_to_output = {
-            "Tables": [table_users, table_actuals, table_financials,table_forecasts],
             "Lambdas": [public_lambda, private_lambda, auth_lambda, authorizer_lambda],
             "Secrets": [jwt_secret,jwt_refresh_secret],
             "Api": [api]
         }
         
         
-        # Tables
-        for t in resources_to_output["Tables"]:
-            CfnOutput(self, f"{t.node.id}Name", value=t.table_name)
+
 
         # Lambdas
         for fn in resources_to_output["Lambdas"]:
