@@ -1,7 +1,7 @@
 import json
-from .src.register import register_user
-from .src.login import login_user
-from common.utils import generate_response
+from src.register import register_user
+from src.login import login_user
+from utils import generate_response
 # from src.verify_account import verify_account
 # from src.send_confirmation_email import send_confirmation_email
 # from src.refresh_token import refresh_access_token
