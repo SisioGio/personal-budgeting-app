@@ -208,7 +208,9 @@ class MyApiStack(Stack):
             "DB_PASSWORD":db_password,
             "DB_HOST":db_host,
             "DB_NAME":'budget',
-            "DB_PORT":'5432'
+            "DB_PORT":'5432',
+            "JWT_SECRET_NAME":"cardy-jwtkey-dev-secret",
+            "JWT_REFRESH_SECRET_NAME":"cardy-jwt-refresh-key-dev-secret"
             
         }
         

@@ -2,12 +2,38 @@ import hashlib
 import hmac
 import jwt
 import os
+import boto3
+from botocore.exceptions import ClientError
 import json
 from dotenv import load_dotenv
 from datetime import datetime, date
 from decimal import Decimal
 load_dotenv()
-SECRET_KEY = os.environ.get("JWT_SECRET")
+
+
+def get_secret(secret_name, region_name="eu-central-1"):
+    """
+    Retrieve a secret from AWS Secrets Manager
+    """
+    # Create a Secrets Manager client
+    client = boto3.client("secretsmanager", region_name=region_name)
+
+    try:
+        response = client.get_secret_value(SecretId=secret_name)
+    except ClientError as e:
+        raise e
+    else:
+        # Secret is stored either as string or binary
+        if 'SecretString' in response:
+            return json.loads(response['SecretString'])
+        else:
+            import base64
+            return json.loads(base64.b64decode(response['SecretBinary']))
+JWT_SECRET_NAME = os.environ.get("JWT_SECRET_NAME")
+JWT_REFRESH_NAME= os.environ.get("JWT_REFRESH_SECRET_NAME")
+
+
+
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
@@ -16,10 +42,12 @@ def verify_password(password, hashed):
     return hash_password(password) == hashed
 
 def generate_access_token(user_id,email):
-    return jwt.encode({"id": user_id,"email":email}, SECRET_KEY, algorithm="HS256")
+    JWT_SECRET = get_secret(JWT_SECRET_NAME)
+    return jwt.encode({"id": user_id,"email":email}, JWT_SECRET, algorithm="HS256")
 
 def generate_refresh_token(user_id,email):
-    return jwt.encode({"id": user_id, "email":email,"type": "refresh"}, SECRET_KEY, algorithm="HS256")
+    JWT_REFRESH_SECRET = get_secret(JWT_REFRESH_NAME)
+    return jwt.encode({"id": user_id, "email":email,"type": "refresh"}, JWT_REFRESH_SECRET, algorithm="HS256")
 
 def send_email(to, subject, body):
     # placeholder for SES or other service

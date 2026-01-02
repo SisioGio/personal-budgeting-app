@@ -1,6 +1,6 @@
 import json
-from common.db import execute_query
-from common.utils import verify_password, generate_access_token, generate_refresh_token,generate_response
+from db import execute_query
+from utils import verify_password, generate_access_token, generate_refresh_token,generate_response
 
 def login_user(event):
     try:

@@ -1,6 +1,6 @@
 import json
-from common.db import execute_query
-from common.utils import hash_password, send_email,generate_response
+from db import execute_query
+from utils import hash_password, send_email,generate_response
 
 def register_user(event):
     try:
