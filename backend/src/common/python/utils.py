@@ -25,12 +25,15 @@ def get_secret(secret_name, region_name="eu-central-1"):
     else:
         # Secret is stored either as string or binary
         if 'SecretString' in response:
-            return json.loads(response['SecretString'])
+            try:
+                return json.loads(response['SecretString'])
+            except Exception:
+                return response['SecretString']
         else:
             import base64
             return json.loads(base64.b64decode(response['SecretBinary']))
-JWT_SECRET_NAME = os.environ.get("JWT_SECRET_NAME")
-JWT_REFRESH_NAME= os.environ.get("JWT_REFRESH_SECRET_NAME")
+JWT_SECRET_NAME = os.environ.get("JWT_SECRET_NAME",'jwtkey-dev-secret')
+JWT_REFRESH_NAME= os.environ.get("JWT_REFRESH_SECRET_NAME",'jwt-refresh-key-dev-secret')
 
 
 

@@ -38,8 +38,8 @@ def test_login(email,password):
 
 if __name__ == "__main__":
     r_digit = random.randint(1,10000)
-    email = f"test{r_digit}@gmail.com"
-    password = f"test_{r_digit}"
-    test_register(email,password)
+    email = "testuser2083@example.com"
+    password = "password"
+    # test_register(email,password)
     access_token,refresh_token = test_login(email,password)
     
