@@ -180,6 +180,8 @@ class MyApiStack(Stack):
                 password_length=64
             )
         )
+        # db secret name
+        db_secret = secretsmanager.Secret.from_secret_name_v2(self,"DbSecretName","rds!db-efc52989-89c8-4009-a2c3-e211a33ba1bd")
         
         
         # Give that role access to DynamoDB tables
@@ -187,7 +189,7 @@ class MyApiStack(Stack):
             table.grant_read_write_data(shared_lambda_role)
             
         # Grant read access to secrets
-        for secret in [jwt_secret,jwt_refresh_secret]:
+        for secret in [jwt_secret,jwt_refresh_secret,db_secret]:
             secret.grant_read(shared_lambda_role)
         
         
