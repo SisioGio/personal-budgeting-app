@@ -121,7 +121,7 @@ class MyApiStack(Stack):
             environment=global_env,
             role=shared_lambda_role,
             layers=[utils_layer,common_layer],
-            timeout=300,
+            timeout=Duration.seconds(90)
         )
 
         public_lambda = _lambda.Function(
