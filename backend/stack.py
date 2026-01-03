@@ -120,7 +120,8 @@ class MyApiStack(Stack):
             code=_lambda.Code.from_asset("src/auth"),
             environment=global_env,
             role=shared_lambda_role,
-            layers=[utils_layer,common_layer]
+            layers=[utils_layer,common_layer],
+            timeout=300,
         )
 
         public_lambda = _lambda.Function(
