@@ -75,16 +75,45 @@ def get_entries(event):
 
     if scenario_id:
         query = """
-            SELECT * FROM entries
-            WHERE user_id = %s AND scenario_id = %s
-            ORDER BY start_date
+            SELECT
+            e.id            AS entry_id,
+            e.name          AS entry_name,
+            e.type          AS entry_type,
+            e.frequency     AS entry_frequency,
+            e.start_date    AS entry_start_date,
+            e.amount        AS entry_amount,
+            e.scenario_id   AS entry_scenario_id,
+            e.category_id   AS entry_category_id,
+
+            c.id            AS category_id,
+            c.name          AS category_name
+            FROM entries as  e
+            JOIN category as c 
+            ON e.category_id = c.id
+            WHERE e.user_id = %s AND e.scenario_id = %s
+            
+            ORDER BY e.start_date
         """
         result = execute_query(query, (user_id, scenario_id))
     else:
         query = """
-            SELECT * FROM entries
-            WHERE user_id = %s
-            ORDER BY start_date
+            SELECT 
+            e.id            AS entry_id,
+            e.name          AS entry_name,
+            e.type          AS entry_type,
+            e.frequency     AS entry_frequency,
+            e.start_date    AS entry_start_date,
+            e.amount        AS entry_amount,
+            e.scenario_id   AS entry_scenario_id,
+            e.category_id   AS entry_category_id,
+            c.id            AS category_id,
+            c.name          AS category_name
+            FROM entries as  e
+            JOIN category as c 
+            ON e.category_id = c.id
+            WHERE e.user_id = %s 
+            
+            ORDER BY e.start_date
         """
         result = execute_query(query, (user_id,))
 

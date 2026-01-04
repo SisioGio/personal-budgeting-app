@@ -1,32 +1,55 @@
 import { useEffect, useState } from 'react';
 import apiClient from '../../utils/apiClient';
 
-export default function EntriesCRUD({ scenarioId, categories }) {
+export default function EntriesCRUD() {
   const [entries, setEntries] = useState([]);
+  const [scenarios, setScenarios] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [scenarioId, setScenarioId] = useState('');
+  const [editingId, setEditingId] = useState(null);
+  const [loading, setLoading] = useState(false);
+
   const [form, setForm] = useState({
     name: '',
     type: 'income',
     frequency: 'monthly',
     start_date: '',
+    end_date: '',
     amount: '',
     category_id: '',
   });
-  const [editingId, setEditingId] = useState(null);
-  const [loading, setLoading] = useState(false);
 
-  const fetchEntries = async () => {
-    if (!scenarioId) return;
+  const fetchScenarios = async () => {
+    const res = await apiClient.get('/scenario');
+    setScenarios(res.data.data);
+  };
+
+  const fetchCategories = async () => {
+    const res = await apiClient.get('/category');
+    setCategories(res.data.data);
+  };
+
+  const fetchEntries = async (sid) => {
+    if (!sid) return;
     setLoading(true);
     const res = await apiClient.get('/entries', {
-      params: { scenario_id: scenarioId },
+      params: { scenario_id: sid },
     });
     setEntries(res.data.data);
     setLoading(false);
   };
 
   useEffect(() => {
-    fetchEntries();
+    fetchScenarios();
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    fetchEntries(scenarioId);
   }, [scenarioId]);
+
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
 
   const resetForm = () => {
     setForm({
@@ -34,14 +57,11 @@ export default function EntriesCRUD({ scenarioId, categories }) {
       type: 'income',
       frequency: 'monthly',
       start_date: '',
+      end_date: '',
       amount: '',
       category_id: '',
     });
     setEditingId(null);
-  };
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleCreate = async () => {
@@ -51,7 +71,7 @@ export default function EntriesCRUD({ scenarioId, categories }) {
       scenario_id: scenarioId,
     });
     resetForm();
-    fetchEntries();
+    fetchEntries(scenarioId);
   };
 
   const handleUpdate = async () => {
@@ -60,29 +80,42 @@ export default function EntriesCRUD({ scenarioId, categories }) {
       amount: Number(form.amount),
     });
     resetForm();
-    fetchEntries();
+    fetchEntries(scenarioId);
   };
 
   const handleDelete = async (id) => {
     await apiClient.delete('/entries', { data: { id } });
-    fetchEntries();
+    fetchEntries(scenarioId);
   };
 
-  const startEdit = (entry) => {
-    setEditingId(entry.id);
+  const startEdit = (e) => {
+    setEditingId(e.entry_id);
     setForm({
-      name: entry.name,
-      type: entry.type,
-      frequency: entry.frequency,
-      start_date: entry.start_date,
-      amount: entry.amount,
-      category_id: entry.category_id,
+      name: e.entry_name,
+      type: e.entry_type,
+      frequency: e.entry_frequency,
+      start_date: e.entry_start_date,
+      end_date: e.entry_end_date,
+      amount: e.entry_amount,
+      category_id: e.entry_category_id,
     });
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
-      <h2 className="text-xl font-bold mb-4">Entries</h2>
+    <div className="max-w-6xl mx-auto p-6">
+      
+      <select
+        value={scenarioId}
+        onChange={(e) => setScenarioId(e.target.value)}
+        className="border rounded px-3 py-2 mb-4 w-full md:w-1/2"
+      >
+        <option value="">Select scenario</option>
+        {scenarios.map((s) => (
+          <option key={s.id ?? s.code} value={s.id}>
+            {s.code}
+          </option>
+        ))}
+      </select>
 
       <div className="grid grid-cols-1 md:grid-cols-6 gap-3 mb-4">
         <input
@@ -117,6 +150,14 @@ export default function EntriesCRUD({ scenarioId, categories }) {
           type="date"
           name="start_date"
           value={form.start_date}
+          onChange={handleChange}
+          className="border rounded px-2 py-1"
+        />
+
+        <input
+          type="date"
+          name="end_date"
+          value={form.end_date}
           onChange={handleChange}
           className="border rounded px-2 py-1"
         />
@@ -165,6 +206,7 @@ export default function EntriesCRUD({ scenarioId, categories }) {
           <button
             onClick={handleCreate}
             className="bg-green-600 text-white px-4 py-2 rounded"
+            disabled={!scenarioId}
           >
             Add Entry
           </button>
@@ -175,9 +217,11 @@ export default function EntriesCRUD({ scenarioId, categories }) {
         <table className="w-full">
           <thead className="bg-gray-100">
             <tr>
+
               <th className="p-2 text-left">Name</th>
               <th className="p-2">Type</th>
               <th className="p-2">Frequency</th>
+              <th className="p-2">Category</th>
               <th className="p-2">Amount</th>
               <th className="p-2">Actions</th>
             </tr>
@@ -185,10 +229,11 @@ export default function EntriesCRUD({ scenarioId, categories }) {
           <tbody>
             {entries.map((e) => (
               <tr key={e.id} className="border-t">
-                <td className="p-2">{e.name}</td>
-                <td className="p-2 text-center">{e.type}</td>
-                <td className="p-2 text-center">{e.frequency}</td>
-                <td className="p-2 text-right font-mono">{e.amount}</td>
+                <td className="p-2">{e.entry_name}</td>
+                <td className="p-2 text-center">{e.entry_type}</td>
+                <td className="p-2 text-center">{e.entry_frequency}</td>
+                <td className="p-2 text-center">{e.category_name}</td>
+                <td className="p-2 text-right font-mono">{e.entry_amount}</td>
                 <td className="p-2">
                   <div className="flex gap-2 justify-center">
                     <button
@@ -207,7 +252,7 @@ export default function EntriesCRUD({ scenarioId, categories }) {
                 </td>
               </tr>
             ))}
-            {entries.length === 0 && (
+            {!loading && entries.length === 0 && (
               <tr>
                 <td colSpan={5} className="p-4 text-center text-gray-500">
                   No entries found

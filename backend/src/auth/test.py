@@ -11,6 +11,8 @@ def create_event(method,path,body):
         'body':json.dumps(body)
     }
     return event
+
+
 def test_register(email,password):
     body = {
         'email':email,

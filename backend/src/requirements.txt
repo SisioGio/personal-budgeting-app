@@ -9,3 +9,4 @@ python-dotenv
 alembic
 sqlalchemy
 psycopg2-binary
+pandas

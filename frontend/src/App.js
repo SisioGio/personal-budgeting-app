@@ -10,6 +10,8 @@ import Private from './pages/general/Private';
 import ProtectedRoute from './utils/ProtectedRoute'
 import CategoryCRUD from './pages/forms/Category';
 import ScenarioCRUD from './pages/forms/Scenario';
+import EntriesCRUD from './pages/forms/Entries';
+import CRM from './pages/forms/CRM';
 
 
 
@@ -29,6 +31,8 @@ const App = () => {
             <Route path="/private"  element={<ProtectedRoute children={<Private/>}></ProtectedRoute>} />
              <Route path="/category"  element={<ProtectedRoute children={<CategoryCRUD/>}></ProtectedRoute>} />
              <Route path="/scenario"  element={<ProtectedRoute children={<ScenarioCRUD/>}></ProtectedRoute>} />
+             <Route path="/entries"  element={<ProtectedRoute children={<EntriesCRUD/>}></ProtectedRoute>} />
+             <Route path="/crm"  element={<ProtectedRoute children={<CRM/>}></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Layout>
