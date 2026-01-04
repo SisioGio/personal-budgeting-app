@@ -9,6 +9,7 @@ import Login from './pages/account/Login';
 import Private from './pages/general/Private';
 import ProtectedRoute from './utils/ProtectedRoute'
 import CategoryCRUD from './pages/forms/Category';
+import ScenarioCRUD from './pages/forms/Scenario';
 
 
 
@@ -27,6 +28,7 @@ const App = () => {
             <Route path="/login"  element={<Login/>} />
             <Route path="/private"  element={<ProtectedRoute children={<Private/>}></ProtectedRoute>} />
              <Route path="/category"  element={<ProtectedRoute children={<CategoryCRUD/>}></ProtectedRoute>} />
+             <Route path="/scenario"  element={<ProtectedRoute children={<ScenarioCRUD/>}></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Layout>

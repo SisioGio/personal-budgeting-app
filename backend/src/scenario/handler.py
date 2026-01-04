@@ -1,6 +1,6 @@
 import json
-from common.utils import generate_response
-from common.db import execute_query
+from utils import generate_response
+from db import execute_query
 
 
 def lambda_handler(event, context):
@@ -61,7 +61,7 @@ def update_scenario(event):
         WHERE user_id = %s AND code = %s
         RETURNING *
     """
-    result = execute_query(query, (description, user_id, code))
+    result = execute_query(query, (description, user_id, code),commit=True)
     if not result:
         return generate_response(404, {"msg": "Scenario not found."})
 
@@ -78,7 +78,7 @@ def delete_scenario(event):
         return generate_response(400, {"msg": "'code' is required to delete a scenario."})
 
     query = "DELETE FROM scenarios WHERE user_id = %s AND code = %s RETURNING *"
-    result = execute_query(query, (user_id, code))
+    result = execute_query(query, (user_id, code),commit=True)
 
     if not result:
         return generate_response(404, {"msg": "Scenario not found."})

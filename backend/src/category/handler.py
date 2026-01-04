@@ -1,6 +1,6 @@
 import json
-from common.utils import generate_response
-from common.db import execute_query
+from utils import generate_response
+from db import execute_query
 
 
 
@@ -43,7 +43,7 @@ def update_category(event):
         WHERE user_id = %s AND id = %s
         RETURNING *
     """
-    result = execute_query(query, (name, user_id, id))
+    result = execute_query(query, (name, user_id, id),commit=True)
     if not result:
         return generate_response(404, {"msg": "Category not found."})
 
@@ -75,8 +75,8 @@ def delete_category(event):
         return generate_response(400, {"msg": "'id' is required to delete a category."})
 
     query = "DELETE FROM category WHERE user_id = %s AND id = %s RETURNING *"
-    result = execute_query(query, (user_id, id))
-
+    result = execute_query(query, (user_id, id),commit=True)
+    print(user_id)
     if not result:
         return generate_response(404, {"msg": "category not found."})
 
