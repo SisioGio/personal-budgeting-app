@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+
 import { Navigate } from 'react-router-dom';
 import { useAuth } from './AuthContext'; // Assuming you are using a context to manage auth state
 

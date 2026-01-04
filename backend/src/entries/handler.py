@@ -1,7 +1,7 @@
 import json
 from datetime import date, datetime
-from common.utils import generate_response
-from common.db import execute_query
+from utils import generate_response
+from db import execute_query
 
 
 ALLOWED_TYPES = {"income", "expense"}
