@@ -85,10 +85,11 @@ def signin(event, context):
                 (email,)
             )
             row = cur.fetchone()
+        row = execute_query("SELECT id, email FROM users WHERE email = %s",(email,))
 
-        if not row:
+        if not row or len(row) ==0:
             return generate_response(404, {"error": "User not found"})
-
+        row = row[0]
         user_id=row['id']
         user_email = row['email']
 

@@ -16,5 +16,8 @@ def create_event(method,path,body=None,email=None,params={}):
 
 
 email = 'testuser2083@example.com'
-event = create_event("GET",'/private/entries',email=email,params={'scenario_id':28})
+# event = create_event("GET",'/private/entries',email=email,params={'scenario_id':28,'simulate_year':2,'time_frame':'monthly'})
+# print(lambda_handler(event,None))
+
+event = create_event("GET",'/private/signin',email=email,params={'scenario_id':28,'simulate_year':2,'time_frame':'monthly'})
 print(lambda_handler(event,None))

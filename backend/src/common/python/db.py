@@ -22,7 +22,7 @@ def get_connection():
         )
     return _conn
 
-def execute_query(query, params=None, fetch=True,commit = False):
+def execute_query(query, params=None, fetch=True, commit=False):
     conn = get_connection()
     try:
         with conn.cursor() as cur:
@@ -31,5 +31,12 @@ def execute_query(query, params=None, fetch=True,commit = False):
         if commit:
             conn.commit()
         return result
-    finally:
-        conn.close()
+    except psycopg2.InterfaceError:
+        # Connection lost, reconnect and retry once
+        conn = get_connection()
+        with conn.cursor() as cur:
+            cur.execute(query, params)
+            result = cur.fetchall() if fetch else None
+        if commit:
+            conn.commit()
+        return result

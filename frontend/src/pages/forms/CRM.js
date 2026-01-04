@@ -4,6 +4,7 @@ import apiClient from '../../utils/apiClient';
 import CategoryCRUD from './Category';
 import ScenarioCRUD from './Scenario';
 import EntriesCRUD from './Entries';
+import EntriesReport from './EntriesReport';
 
 export default function CRM() {
   const [activeTab, setActiveTab] = useState('categories');
@@ -12,6 +13,7 @@ export default function CRM() {
     { id: 'categories', label: 'Categories' },
     { id: 'scenarios', label: 'Scenarios' },
     { id: 'entries', label: 'Entries' },
+    { id: 'report', label: 'Report' },
   ];
 
   return (
@@ -40,6 +42,7 @@ export default function CRM() {
         {activeTab === 'categories' && <CategoryCRUD />}
         {activeTab === 'scenarios' && <ScenarioCRUD />}
         {activeTab === 'entries' && <EntriesCRUD />}
+          {activeTab === 'Report' && <EntriesReport />}
       </div>
     </div>
   );
