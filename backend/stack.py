@@ -141,6 +141,7 @@ class MyApiStack(Stack):
             code=_lambda.Code.from_asset("src/private"),
             environment=global_env,
             role=shared_lambda_role,
+            timeout= Duration.seconds(30),
             layers=[utils_layer,common_layer]
         )
         

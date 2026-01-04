@@ -31,12 +31,7 @@ def execute_query(query, params=None, fetch=True, commit=False):
         if commit:
             conn.commit()
         return result
-    except psycopg2.InterfaceError:
-        # Connection lost, reconnect and retry once
-        conn = get_connection()
-        with conn.cursor() as cur:
-            cur.execute(query, params)
-            result = cur.fetchall() if fetch else None
-        if commit:
-            conn.commit()
-        return result
+    except Exception as e:
+        # Rollback to reset transaction state
+        conn.rollback()
+        raise

@@ -78,6 +78,10 @@ export default function EntriesCRUD() {
     await apiClient.put('/entries', {
       id: editingId,
       amount: Number(form.amount),
+      start_date: form.start_date,
+      end_date: form.end_date,
+      type: form.type,
+      frequency: form.frequency
     });
     resetForm();
     fetchEntries(scenarioId);
@@ -142,6 +146,7 @@ export default function EntriesCRUD() {
           onChange={handleChange}
           className="border rounded px-2 py-1"
         >
+          <option value="one_time">One Time</option>
           <option value="monthly">Monthly</option>
           <option value="yearly">Yearly</option>
         </select>
@@ -222,6 +227,9 @@ export default function EntriesCRUD() {
               <th className="p-2">Type</th>
               <th className="p-2">Frequency</th>
               <th className="p-2">Category</th>
+              <th className="p-2">Start</th>
+              <th className="p-2">End</th>
+
               <th className="p-2">Amount</th>
               <th className="p-2">Actions</th>
             </tr>
@@ -233,6 +241,8 @@ export default function EntriesCRUD() {
                 <td className="p-2 text-center">{e.entry_type}</td>
                 <td className="p-2 text-center">{e.entry_frequency}</td>
                 <td className="p-2 text-center">{e.category_name}</td>
+                <td className="p-2 text-center">{e.entry_start_date}</td>
+                <td className="p-2 text-center">{e.entry_end_date}</td>
                 <td className="p-2 text-right font-mono">{e.entry_amount}</td>
                 <td className="p-2">
                   <div className="flex gap-2 justify-center">

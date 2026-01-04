@@ -7,7 +7,7 @@ import EntriesCRUD from './Entries';
 import EntriesReport from './EntriesReport';
 
 export default function CRM() {
-  const [activeTab, setActiveTab] = useState('categories');
+  const [activeTab, setActiveTab] = useState('report');
 
   const tabs = [
     { id: 'categories', label: 'Categories' },
@@ -42,7 +42,7 @@ export default function CRM() {
         {activeTab === 'categories' && <CategoryCRUD />}
         {activeTab === 'scenarios' && <ScenarioCRUD />}
         {activeTab === 'entries' && <EntriesCRUD />}
-          {activeTab === 'Report' && <EntriesReport />}
+          {activeTab === 'report' && <EntriesReport />}
       </div>
     </div>
   );
