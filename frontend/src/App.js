@@ -6,7 +6,9 @@ import Layout from "./components/Layout";
 import Home from "./pages/general/Home";
 import NotFound from "./pages/general/NotFound";
 import Login from './pages/account/Login';
-
+import Private from './pages/general/Private';
+import ProtectedRoute from './utils/ProtectedRoute'
+import CategoryCRUD from './pages/forms/Category';
 
 
 
@@ -23,6 +25,8 @@ const App = () => {
           <Routes>
             <Route path="/"  element={<Home />} />
             <Route path="/login"  element={<Login/>} />
+            <Route path="/private"  element={<ProtectedRoute children={<Private/>}></ProtectedRoute>} />
+             <Route path="/category"  element={<ProtectedRoute children={<CategoryCRUD/>}></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Layout>

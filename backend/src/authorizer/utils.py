@@ -3,6 +3,9 @@
 
 import boto3
 import json
+import os
+
+
 
 
 def get_secret(secret_name: str, region_name: str = "eu-central-1"):

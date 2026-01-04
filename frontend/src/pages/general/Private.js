@@ -1,15 +1,15 @@
 
 
-const HomePage = () => {
+const Private = () => {
 
 
   return (
     <div className="min-h-screen  flex flex-col">
       
-HOME
+Private
     </div>
   );
 };
 
 
-export default HomePage;
+export default Private;

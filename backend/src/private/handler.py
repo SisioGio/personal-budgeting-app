@@ -28,17 +28,6 @@ load_dotenv()
 
 
 
-# TABLES
-TABLE_USERS= os.environ.get('TABLE_USERS')
-TABLE_ACTUALS = os.environ.get('TABLE_ACTUALS')
-TABLE_FINANCIALS=os.environ.get('TABLE_FINANCIALS')
-TABLE_FORECAST=os.environ.get('TABLE_FORECAST')
-
-
-users_table = dynamodb.Table(TABLE_USERS)
-actuals_table = dynamodb.Table(TABLE_ACTUALS)
-financials_table = dynamodb.Table(TABLE_FINANCIALS)
-forecast_table = dynamodb.Table(TABLE_FORECAST)
 
 
 logger = Logger(service="finance-manager")

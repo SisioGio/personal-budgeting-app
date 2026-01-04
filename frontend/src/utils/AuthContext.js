@@ -1,10 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { jwtDecode } from 'jwt-decode';
-const AuthContext = createContext();
+import apiClient from './apiClient';
 
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
+
+
+const AuthContext = createContext(null);
+
+export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
   const [auth, setAuth] = useState(null);
@@ -17,41 +19,42 @@ export const AuthProvider = ({ children }) => {
       return null;
     }
   }, []);
-  const login = useCallback((token) => {
+
+
+  const loginWithToken = useCallback(async (accessToken) => {
     try {
-      const userData = decodeAccessToken(token);
+      // Save token temporarily for the request
+      localStorage.setItem("access_token", accessToken);
 
-      if (!userData) return;
+      const res = await apiClient.get("/private/signin");
 
-      const api_key = userData.api_key;
-      if (api_key) {
-        localStorage.setItem('api_key', api_key);
-      }
-      localStorage.setItem('accessToken', token);
-      setAuth(userData);
+      setAuth(res.data.data); // backend-validated user
     } catch (error) {
-      console.error(error);
-      setAuth(null);
+      console.error("Token validation failed", error);
+      logout();
     }
-  }, [decodeAccessToken]);
+  }, []);
 
   const logout = () => {
     // Implement logout logic
-    localStorage.removeItem('accessToken')
-    localStorage.removeItem("refreshToken")
+    localStorage.removeItem('access_token')
+    localStorage.removeItem("refresh_token")
    
     setAuth(null);
   };
 
   useEffect(() => {
-  if (typeof window === 'undefined') return;
-  const token = localStorage.getItem('accessToken');
-  if (token) login(token);
-  else setAuth(false);
-}, [login]);
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      setAuth(false);
+      return;
+    }
+
+    loginWithToken(token);
+  }, [loginWithToken]);
 
   return (
-    <AuthContext.Provider value={{ auth, login, logout }}>
+    <AuthContext.Provider value={{ auth, loginWithToken, logout }}>
       {children}
     </AuthContext.Provider>
   );

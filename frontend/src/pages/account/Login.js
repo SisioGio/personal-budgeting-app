@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 
 const Login = () => {
-  const { login } = useAuth();
+  const { loginWithToken } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,16 +18,17 @@ const Login = () => {
       const response = await apiClient.post('auth/login', { email, password });
       const data = await response.data;
       const access_token = data['access_token'];
-      const refreshToken = data['refreshToken'];
+      const refreshToken = data['refresh_token'];
 
       
 
-      localStorage.setItem('bnb-demo-accessToken', access_token);
-      localStorage.setItem('bnb-demo-refreshToken', refreshToken);
-      login(access_token); // Set auth to true
-      navigate('/'); // Redirect to the desired page
+      localStorage.setItem('access_token', access_token);
+      localStorage.setItem('refresh_token', refreshToken);
+      loginWithToken(access_token);
+      navigate('/'); 
     } catch (err) {
        // Check if err.response and err.response.data are defined
+       console.log(error)
        setError(err?.response?.data?.message || "An unexpected error occurred.");
     }
   };
@@ -44,7 +45,7 @@ const Login = () => {
           <input
             type="email"
             value={email}
-            defaultValue={'alessiogiovannini23@gmail.com'}
+            defaultValue={'testuser2083@example.com'}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
             className="w-full p-4 bg-slate-800 bg-opacity-60 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:bg-slate-800 focus:bg-opacity-60 transition duration-200"
@@ -57,7 +58,7 @@ const Login = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
-            defaultValue={'test123'}
+            defaultValue={'password'}
             className="w-full p-4 bg-slate-800 bg-opacity-60 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:bg-slate-800 focus:bg-opacity-60 transition duration-200"
             required
           />

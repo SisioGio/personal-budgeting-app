@@ -283,8 +283,8 @@ class MyApiStack(Stack):
         
         # /actuals (protected route)
         actuals_resource = api.root.add_resource("actuals")
-        proxy = actuals_resource.add_resource("{proxy+}")
-        proxy.add_method(
+        # proxy = actuals_resource.add_resource("{proxy+}")
+        actuals_resource.add_method(
             "ANY",
             actuals_integration,
             authorizer=token_authorizer,
@@ -303,8 +303,8 @@ class MyApiStack(Stack):
         
         # /category (protected route)
         category_resource = api.root.add_resource("category")
-        proxy = category_resource.add_resource("{proxy+}")
-        proxy.add_method(
+        # proxy = category_resource.add_resource("{proxy+}")
+        category_resource.add_method(
             "ANY",
             category_integration,
             authorizer=token_authorizer,
@@ -323,8 +323,8 @@ class MyApiStack(Stack):
         
         # /entries (protected route)
         entries_resource = api.root.add_resource("entries")
-        proxy = entries_resource.add_resource("{proxy+}")
-        proxy.add_method(
+        # proxy = entries_resource.add_resource("{proxy+}")
+        entries_resource.add_method(
             "ANY",
             entries_integration,
             authorizer=token_authorizer,
@@ -344,8 +344,8 @@ class MyApiStack(Stack):
         
         # /scenario (protected route)
         scenario_resource = api.root.add_resource("scenario")
-        proxy = scenario_resource.add_resource("{proxy+}")
-        proxy.add_method(
+        # proxy = scenario_resource.add_resource("{proxy+}")
+        scenario_resource.add_method(
             "ANY",
             scenario_integration,
             authorizer=token_authorizer,
