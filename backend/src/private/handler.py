@@ -49,6 +49,8 @@ def lambda_handler(event, context):
     print(event)
     if http_method == 'GET' and path == '/private/signin':
         return signin(event,context)
+    if http_method == 'PUT' and path == '/private/balance':
+        return update_user(event,context)
     elif http_method == 'GET' and path == '/private/entries':
         return get_entries_report(event,context)
     
@@ -82,7 +84,7 @@ def signin(event, context):
 
         with db_conn.cursor() as cur:
             cur.execute(
-                "SELECT id, email FROM users WHERE email = %s",
+                "SELECT id, email,initial_balance FROM users WHERE email = %s",
                 (email,)
             )
             row = cur.fetchone()
@@ -105,8 +107,27 @@ def signin(event, context):
         logger.exception("Failed to get user profile")
         return generate_response(500, {"error": "Internal server error"})
 
+@tracer.capture_lambda_handler
+@metrics.log_metrics
+def update_user(event):
+    user_id = event['requestContext']['authorizer']['principalId']
+    body = json.loads(event.get('body', '{}'))
+    initial_balance = body.get('initial_balance')
+    
+    if not initial_balance:
+        return generate_response(400, {"msg": "'code' is required to update a scenario."})
 
+    query = """
+        UPDATE users
+        SET initial_balance = %s
+        WHERE user_id = %s 
+        RETURNING *
+    """
+    result = execute_query(query, (initial_balance, user_id),commit=True)
+    if not result:
+        return generate_response(404, {"msg": "User not found."})
 
+    return generate_response(200, {"msg": "User updated", "data": result})
 
 def get_entries(user_id,scenario_id):
     # Fetch entries
