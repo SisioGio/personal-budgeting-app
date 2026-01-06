@@ -82,13 +82,13 @@ def signin(event, context):
         if not email:
             return generate_response(401, {"error": "Unauthorized"})
 
-        with db_conn.cursor() as cur:
-            cur.execute(
-                "SELECT id, email,initial_balance FROM users WHERE email = %s",
-                (email,)
-            )
-            row = cur.fetchone()
-        row = execute_query("SELECT id, email FROM users WHERE email = %s",(email,))
+        # with db_conn.cursor() as cur:
+        #     cur.execute(
+        #         "SELECT id, email,initial_balance FROM users WHERE email = %s",
+        #         (email,)
+        #     )
+        #     row = cur.fetchone()
+        row = execute_query("SELECT id, email,initial_balance FROM users WHERE email = %s",(email,))
 
         if not row or len(row) ==0:
             return generate_response(404, {"error": "User not found"})
