@@ -111,8 +111,8 @@ export default function CategoryCRUD() {
       />
 
       {/* Scrollable Cards */}
-      <div className="rounded-xl border border-gray-700 bg-gray-900/70 overflow-hidden">
-  
+      <div className="rounded-xl border border-gray-700 bg-gray-900/70 overflow-x-auto">
+        <div className="min-w-[400px]">
   {/* Header */}
   <div className="grid grid-cols-[1fr_auto] px-4 py-2 text-xs uppercase tracking-wide text-gray-400 bg-gray-800 sticky top-0 z-10">
     <span>Category</span>
@@ -122,8 +122,16 @@ export default function CategoryCRUD() {
   {/* Scrollable body */}
   <div className="max-h-[600px] overflow-y-auto divide-y divide-gray-800">
     {filteredCategories.length === 0 && (
-      <div className="p-6 text-center text-gray-400">
-        No categories found
+      <div className="p-8 text-center space-y-3">
+        <div className="text-5xl">🏷️</div>
+        <div className="text-gray-400 font-semibold">
+          {search ? 'No categories match your search' : 'No categories yet'}
+        </div>
+        {!search && (
+          <p className="text-sm text-gray-500">
+            Add categories to organize your financial entries
+          </p>
+        )}
       </div>
     )}
 
@@ -158,11 +166,12 @@ export default function CategoryCRUD() {
       </div>
     ))}
   </div>
+  </div>
 </div>
 
 
 
-     
+
     </div>
   );
 }

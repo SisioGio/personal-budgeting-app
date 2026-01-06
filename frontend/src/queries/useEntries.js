@@ -14,13 +14,13 @@ export const useEntries = (scenarioId) =>
     },
   });
 
-export const useActVsBud = (scenarioId) =>
+export const useActVsBud = (scenarioId,period) =>
   useQuery({
-    queryKey: ['actvsbud', scenarioId],
+    queryKey: ['actvsbud', scenarioId,period],
     enabled: !!scenarioId,
     queryFn: async () => {
       const res = await apiClient.get('/private/report/actuals-vs-budget', {
-        params: { scenario_id: scenarioId },
+        params: { scenario_id: scenarioId ,period:period},
       });
       return res.data.data;
     },

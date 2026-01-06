@@ -67,7 +67,7 @@ def get(event):
 
     from_date_str = params.get("from_date")
     to_date_str = params.get("to_date")
-
+    period = params.get("period")
     # Parse dates if provided, else set sensible defaults
     try:
         from_date = datetime.fromisoformat(from_date_str).date() if from_date_str else None
@@ -80,7 +80,7 @@ def get(event):
         return generate_response(400, {"msg": "Invalid to_date format, expected YYYY-MM-DD"})
 
     # Build dynamic WHERE clause
-    query = "SELECT * FROM actuals WHERE user_id = %s"
+    query = "SELECT * FROM actuals WHERE user_id = %s "
     params_list = [user_id]
 
     if from_date:
@@ -89,6 +89,9 @@ def get(event):
     if to_date:
         query += " AND actual_date <= %s"
         params_list.append(to_date)
+    if period:
+        query += " AND TO_CHAR(actual_date,'YYYY-MM') = %s"
+        params_list.append(period)  
 
     query += " ORDER BY actual_date"
 

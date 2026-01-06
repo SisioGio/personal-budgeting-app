@@ -62,7 +62,8 @@ export default function EntriesCRUD({ scenarioId }) {
     name="name"
     value={form.name}
     onChange={handleChange}
-    placeholder="Entry name"
+    placeholder="Entry name *"
+    required
     className="px-4 py-2 rounded-lg border border-gray-700 bg-gray-900 text-white placeholder-gray-400 focus:outline-none focus:ring focus:ring-blue-500 transition"
   />
 
@@ -71,7 +72,10 @@ export default function EntriesCRUD({ scenarioId }) {
     name="amount"
     value={form.amount}
     onChange={handleChange}
-    placeholder="Amount"
+    placeholder="Amount *"
+    required
+    min="0"
+    step="0.01"
     className="px-4 py-2 rounded-lg border border-gray-700 bg-gray-900 text-white placeholder-gray-400 focus:outline-none focus:ring focus:ring-blue-500 transition"
   />
 
@@ -79,9 +83,10 @@ export default function EntriesCRUD({ scenarioId }) {
     name="category_id"
     value={form.category_id}
     onChange={handleChange}
+    required
     className="px-4 py-2 rounded-lg border border-gray-700 bg-gray-900 text-white focus:outline-none focus:ring focus:ring-blue-500 transition"
   >
-    <option value="">Category</option>
+    <option value="">Select Category *</option>
     {categories.map((c) => (
       <option key={c.id} value={c.id}>{c.name}</option>
     ))}
@@ -89,12 +94,14 @@ export default function EntriesCRUD({ scenarioId }) {
 
   <button
     onClick={handleSubmit}
-    disabled={!scenarioId}
-    className={`px-4 py-2 rounded-lg text-white font-semibold ${
-      editingId
+    disabled={!scenarioId || !form.name || !form.amount || !form.category_id || !form.start_date}
+    className={`px-4 py-2 rounded-lg text-white font-semibold transition ${
+      !scenarioId || !form.name || !form.amount || !form.category_id || !form.start_date
+        ? 'bg-gray-600 cursor-not-allowed'
+        : editingId
         ? 'bg-indigo-600 hover:bg-indigo-700'
         : 'bg-green-600 hover:bg-green-700'
-    } transition`}
+    }`}
   >
     {editingId ? 'Update' : 'Add Entry'}
   </button>
@@ -109,17 +116,17 @@ export default function EntriesCRUD({ scenarioId }) {
   )}
 
   {/* Advanced row */}
- <div className="md:col-span-4 grid grid-cols-1 md:grid-cols-5 gap-3">
+ <div className="col-span-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
 
   {/* Type */}
-      <div className="md:col-span-1">
+      <div className="sm:col-span-2 md:col-span-1">
       <p className="text-xs text-gray-400 mb-1 ml-1">Type</p>
 
       <div className="grid grid-cols-2 gap-2">
         {['income', 'expense'].map((type) => (
           <label
             key={type}
-            className={`cursor-pointer px-4 py-2 rounded-lg border text-center font-semibold transition
+            className={`cursor-pointer px-3 sm:px-4 py-2 rounded-lg border text-center text-xs sm:text-sm font-semibold transition
               ${
                 form.type === type
                   ? type === 'income'
@@ -144,7 +151,7 @@ export default function EntriesCRUD({ scenarioId }) {
 
 
   {/* Frequency */}
-      <div className="md:col-span-2">
+      <div className="col-span-full sm:col-span-2 md:col-span-2">
       <p className="text-xs text-gray-400 mb-1 ml-1">Frequency</p>
 
       <div className="grid grid-cols-3 gap-2">
@@ -155,7 +162,7 @@ export default function EntriesCRUD({ scenarioId }) {
         ].map((f) => (
           <label
             key={f.value}
-            className={`cursor-pointer px-4 py-2 rounded-lg border text-center font-medium transition
+            className={`cursor-pointer px-2 sm:px-4 py-2 rounded-lg border text-center text-xs sm:text-sm font-medium transition
               ${
                 form.frequency === f.value
                   ? 'bg-blue-600/20 border-blue-500 text-blue-400'
@@ -176,7 +183,7 @@ export default function EntriesCRUD({ scenarioId }) {
       </div>
     </div>
 
-<div className="grid grid-cols-1 md:grid-cols-2 md:col-span-2 gap-2">
+<div className="grid grid-cols-1 sm:grid-cols-2 col-span-full md:col-span-2 gap-2">
 
 
     <div className="relative">
@@ -191,15 +198,15 @@ export default function EntriesCRUD({ scenarioId }) {
         onChange={(e) => {
           handleChange(e);
 
-          // Auto-fill end date for one-time
-          if (form.frequency === 'one_time') {
-            handleChange({
-              target: {
-                name: 'end_date',
-                value: e.target.value,
-              },
-            });
-          }
+          // // Auto-fill end date for one-time
+          // if (form.frequency === 'one_time') {
+          //   handleChange({
+          //     target: {
+          //       name: 'end_date',
+          //       value: e.target.value,
+          //     },
+          //   });
+          // }
         }}
         className="w-full px-4 py-2 rounded-xl border border-gray-700 bg-gray-900 text-white
                   focus:outline-none focus:ring focus:ring-blue-500 transition"
@@ -256,9 +263,9 @@ export default function EntriesCRUD({ scenarioId }) {
   className="w-full px-4 py-2 rounded-lg border border-gray-700 bg-gray-900 text-white placeholder-gray-400 focus:outline-none focus:ring focus:ring-blue-500 transition"
 />
 
-  
-      <div className="rounded-xl border border-gray-700 bg-gray-900/70 overflow-hidden">
 
+      <div className="rounded-xl border border-gray-700 bg-gray-900/70 overflow-x-auto">
+        <div className="min-w-[800px]">
   {/* Header */}
   <div className="grid grid-cols-[1.5fr_120px_120px_140px_120px_auto] px-4 py-2 text-xs uppercase tracking-wide text-gray-400 bg-gray-800 sticky top-0 z-10">
     <span>Name</span>
@@ -273,8 +280,16 @@ export default function EntriesCRUD({ scenarioId }) {
   <div className="max-h-[600px] overflow-y-auto divide-y divide-gray-800">
 
     {filtered.length === 0 && (
-      <div className="p-6 text-center text-gray-400">
-        No entries found
+      <div className="p-8 text-center space-y-3">
+        <div className="text-5xl">📝</div>
+        <div className="text-gray-400 font-semibold">
+          {search ? 'No entries match your search' : 'No entries yet'}
+        </div>
+        {!search && (
+          <p className="text-sm text-gray-500">
+            Create your first entry above to start budgeting
+          </p>
+        )}
       </div>
     )}
 
@@ -329,6 +344,7 @@ export default function EntriesCRUD({ scenarioId }) {
         </div>
       </div>
     ))}
+  </div>
   </div>
 </div>
 

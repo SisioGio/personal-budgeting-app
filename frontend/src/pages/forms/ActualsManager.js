@@ -4,20 +4,31 @@ import apiClient from './../../utils/apiClient';
 import { useEntries } from '../../queries/useEntries';
 import { useScenario } from '../../utils/ScenarioContext';
 import ActualsVsBudget from './ActualsVsBudget';
+import EmptyScenarioPrompt from '../../components/EmptyScenarioPrompt';
+import { format, subMonths } from "date-fns";
+
+
 export default function ActualsManager() {
     const { scenarioId } = useScenario();
   const queryClient = useQueryClient();
+    const [period, setPeriod] = useState(format(new Date(), "yyyy-MM"));
+  
+   const lastNextMonths = Array.from({ length: 13 }, (_, i) => {
+    return format(subMonths(new Date(), 6 - i), "yyyy-MM");
+  });
+
+
 
   /* ------------------ DATA ------------------ */
   const { data: entries = [], isLoading } = useEntries(scenarioId);
 
   const { data: actuals = [] } = useQuery({
-    queryKey: ['actuals', scenarioId],
+    queryKey: ['actuals',period],
     queryFn: async () => {
-      const res = await apiClient.get('/actuals');
+      const res = await apiClient.get(`/actuals?period=${period}`,);
       return res.data.data;
     },
-    enabled: !!scenarioId,
+    enabled: !!period,
   });
 
   /* ------------------ STATE ------------------ */
@@ -92,24 +103,41 @@ export default function ActualsManager() {
   };
 
   /* ------------------ RENDER ------------------ */
+  if (!scenarioId) {
+    return <EmptyScenarioPrompt />;
+  }
+
   return (
-    <div className="space-y-6">
-      <ActualsVsBudget/>
-      <div className="rounded-2xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6 shadow-xl border border-gray-700">
-        <h3 className="font-mono text-blue-400 text-lg mb-4">
+    <div className="space-y-4 sm:space-y-6">
+
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">💰 Actuals Manager</h1>
+          <p className="text-sm sm:text-base text-gray-400">Record and track your actual income and expenses</p>
+        </div>
+      </div>
+
+
+
+
+
+      <div className="rounded-xl sm:rounded-2xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4 sm:p-6 shadow-xl border border-gray-700">
+        <h3 className="font-mono text-blue-400 text-base sm:text-lg mb-3 sm:mb-4">
           Record Actual
         </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-2 sm:gap-3">
 
           <select
             name="entry_id"
             value={form.entry_id}
             onChange={handleChange}
+            required
              className="px-4 py-2 rounded-lg border border-gray-700 bg-gray-900 text-white focus:outline-none focus:ring focus:ring-blue-500 transition"
-  
+
           >
-            <option value="">Select Entry</option>
+            <option value="">Select Entry *</option>
             {entries.map((e) => (
               <option key={e.entry_id} value={e.entry_id}>
                 {e.entry_name} · {e.category_name}
@@ -117,25 +145,29 @@ export default function ActualsManager() {
             ))}
           </select>
 
-   
+
           <input
             type="number"
             name="amount"
-            placeholder="Amount"
+            placeholder="Amount *"
             value={form.amount}
             onChange={handleChange}
-            className="px-4 py-2 rounded-lg border border-gray-700 bg-gray-900 text-white focus:outline-none focus:ring focus:ring-blue-500 transition"
-  
+            required
+            min="0"
+            step="0.01"
+            className="px-4 py-2 rounded-lg border border-gray-700 bg-gray-900 text-white placeholder-gray-400 focus:outline-none focus:ring focus:ring-blue-500 transition"
+
           />
 
-   
+
           <input
             type="date"
             name="actual_date"
             value={form.actual_date}
             onChange={handleChange}
+            required
             className="px-4 py-2 rounded-lg border border-gray-700 bg-gray-900 text-white focus:outline-none focus:ring focus:ring-blue-500 transition"
-  
+
           />
 
         
@@ -179,9 +211,12 @@ export default function ActualsManager() {
  <div className="flex gap-2 ">
           <button
             onClick={handleSubmit}
+            disabled={!form.entry_id || !form.amount || !form.actual_date || !form.type}
             className={`px-5 py-2 rounded-xl font-semibold transition
               ${
-                editingId
+                !form.entry_id || !form.amount || !form.actual_date || !form.type
+                  ? 'bg-gray-600 cursor-not-allowed'
+                  : editingId
                   ? 'bg-indigo-600 hover:bg-indigo-700'
                   : 'bg-green-600 hover:bg-green-700'
               } text-white`}
@@ -208,62 +243,90 @@ export default function ActualsManager() {
       </div>
 
 
-      <div className="max-h-[500px] overflow-y-auto space-y-3">
-        {actuals.length === 0 && (
-          <p className="text-center text-gray-400">No actuals recorded</p>
-        )}
-
-        {actuals.map((a) => {
-          const entry = entries.find(e => e.entry_id === a.entry_id);
-
-          return (
-            <div
-              key={a.id}
-              className="relative p-4 rounded-xl bg-gray-900 border border-gray-800 hover:border-blue-500 transition shadow"
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="font-mono text-blue-400 text-sm">
-                    {a.actual_date}
-                  </p>
-                  <p className="text-gray-300 text-sm">
-                    {entry?.entry_name}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {entry?.category_name}
-                  </p>
-                </div>
-
-                <p
-                  className={`font-mono text-lg ${
-                    entry?.entry_type === 'income'
-                      ? 'text-green-400'
-                      : 'text-red-400'
-                  }`}
-                >
-                  {entry?.entry_type === 'income' ? '+' : '-'}
-                  {a.amount}
-                </p>
-              </div>
-
-              <div className="absolute top-3 right-3 flex gap-2">
-                <button
-                  onClick={() => startEdit(a)}
-                  className="px-2 py-1 text-xs rounded bg-yellow-500 hover:bg-yellow-600 text-white"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => deleteActual.mutate(a.id)}
-                  className="px-2 py-1 text-xs rounded bg-red-600 hover:bg-red-700 text-white"
-                >
-                  Delete
-                </button>
-              </div>
+      <div className="mb-3 sm:mb-4 flex space-x-2 overflow-x-auto py-2 -mx-4 px-4 sm:mx-0 sm:px-0">
+              {lastNextMonths.map((m) => {
+                const isActive = period === m;
+                return (
+                  <button
+                    key={m}
+                    onClick={() => setPeriod(m)}
+                    className={`flex-shrink-0 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-semibold text-xs sm:text-sm transition ${
+                      isActive
+                        ? "bg-blue-600 text-white shadow-lg"
+                        : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                    }`}
+                  >
+                    {format(new Date(m + "-01"), "MMM yyyy")}
+                  </button>
+                );
+              })}
             </div>
-          );
-        })}
+
+
+
+      <div className='grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4'>
+            <div className="max-h-[500px] overflow-y-auto space-y-1.5 col-span-1">
+                    {actuals.length === 0 && (
+                      <div className="p-8 text-center space-y-3">
+                        <div className="text-4xl">💸</div>
+                        <div className="text-gray-400 font-semibold text-sm">
+                          No actuals for {format(new Date(period + "-01"), "MMMM yyyy")}
+                        </div>
+                        <p className="text-xs text-gray-500">
+                          Record your first actual transaction above
+                        </p>
+                      </div>
+                    )}
+
+                    {actuals.map((a) => {
+                      const entry = entries.find(e => e.entry_id === a.entry_id);
+
+                      return (
+                        <div
+                          key={a.id}
+                          className="flex items-center gap-2 p-1.5 rounded bg-gray-900 border border-gray-800 hover:border-blue-500 transition text-xs"
+                        >
+                          <span className="font-mono text-blue-400 flex-shrink-0">
+                            {a.actual_date}
+                          </span>
+                          <span className="text-gray-300 truncate flex-1 min-w-0">
+                            {entry?.entry_name}
+                          </span>
+                          <span className="text-gray-500 text-[10px] flex-shrink-0">
+                            {entry?.category_name}
+                          </span>
+                          <span
+                            className={`font-mono font-semibold flex-shrink-0 ${
+                              entry?.entry_type === 'income'
+                                ? 'text-green-400'
+                                : 'text-red-400'
+                            }`}
+                          >
+                            {entry?.entry_type === 'income' ? '+' : '-'}
+                            {a.amount}
+                          </span>
+                          <button
+                            onClick={() => startEdit(a)}
+                            className="px-1.5 py-0.5 text-[10px] rounded bg-yellow-500 hover:bg-yellow-600 text-white flex-shrink-0"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => deleteActual.mutate(a.id)}
+                            className="px-1.5 py-0.5 text-[10px] rounded bg-red-600 hover:bg-red-700 text-white flex-shrink-0"
+                          >
+                            Del
+                          </button>
+                        </div>
+                      );
+                    })}
+              </div>
+      <div className='col-span-1 md:col-span-2'>
+      <ActualsVsBudget period={period}/>
       </div>
+            
+      </div>
+      
     </div>
   );
 }

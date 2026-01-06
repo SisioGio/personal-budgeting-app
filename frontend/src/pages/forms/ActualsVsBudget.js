@@ -1,125 +1,68 @@
-import { useScenario } from '../../utils/ScenarioContext';
-import { useActVsBud } from '../../queries/useEntries';
+import React, { useState, useEffect } from "react";
+import { useActVsBud } from "../../queries/useEntries";
+import { useScenario } from "../../utils/ScenarioContext";
+import { format, subMonths } from "date-fns";
 
-export default function ActualsVsBudget() {
+export default function ActVsBudReport({period}) {
   const { scenarioId } = useScenario();
-  const { data, isLoading, error } = useActVsBud(scenarioId);
 
-  if (!scenarioId) {
-    return (
-      <div className="text-gray-400 text-center py-12">
-        Select a scenario to view reports
-      </div>
-    );
-  }
 
-  if (isLoading) {
-    return (
-      <div className="text-blue-400 text-center py-12 animate-pulse">
-        Loading actuals vs budget…
-      </div>
-    );
-  }
+  const { data, isLoading, refetch } = useActVsBud(scenarioId, period);
 
-  if (error) {
-    return (
-      <div className="text-red-400 text-center py-12">
-        Failed to load report
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (scenarioId) refetch();
+  }, [period, scenarioId, refetch]);
 
-  const grouped = groupByPeriod(data);
+  if (!scenarioId) return <p className="text-gray-400 p-4">Select a scenario</p>;
+  if (isLoading) return <p className="text-gray-400 p-4">Loading...</p>;
 
   return (
-    <div className="space-y-8">
+    <div className="">
+      {/* Cards Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
+        {data?.length === 0 && (
+          <p className="col-span-full text-center text-gray-400 text-sm">
+            No entries
+          </p>
+        )}
 
-      {grouped.map((periodBlock) => (
-        <div
-          key={periodBlock.period}
-          className="rounded-2xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900
-                     shadow-xl border border-gray-800 p-6"
-        >
-          {/* Period Header */}
-          <div className="flex justify-between items-center mb-5">
-            <h3 className="text-xl font-semibold text-blue-400 tracking-wide">
-              {periodBlock.period}
-            </h3>
-            <span className="text-xs text-gray-500 uppercase tracking-wider">
-              Actuals vs Budget
-            </span>
-          </div>
+        {data?.map((row) => {
+          const pct = row.budget ? (row.actual / row.budget) * 100 : 0;
+          const withinBudget = pct <= 100;
 
-          {/* Table Header */}
-          <div className="grid grid-cols-4 gap-4 text-xs text-gray-500 mb-2 px-2">
-            <span>Entry</span>
-            <span className="text-right">Budget</span>
-            <span className="text-right">Actual</span>
-            <span className="text-right">Δ</span>
-          </div>
+          return (
+            <div
+              key={row.entry_id}
+              className="relative p-1.5 rounded bg-gray-900 border border-gray-800 hover:border-blue-500 transition"
+            >
+              <p className="font-semibold text-gray-300 text-xs truncate">{row.entry_name}</p>
 
-          {/* Entries */}
-          <div className="space-y-2">
-            {periodBlock.entries.map((e) => {
-              const isOver = e.actual > e.budget;
-
-              return (
+              {/* Progress Bar */}
+              <div className="w-full h-1.5 mt-1 bg-gray-700 rounded-full overflow-hidden">
                 <div
-                  key={e.entry_id}
-                  className="grid grid-cols-4 gap-4 items-center px-3 py-3 rounded-xl
-                             bg-gray-950 border border-gray-800
-                             hover:border-blue-500/40 transition"
-                >
-                  {/* Entry name */}
-                  <span className="text-white font-medium truncate">
-                    {e.entry_name}
-                  </span>
+                  className={`h-full ${withinBudget ? "bg-green-400" : "bg-red-500"} transition-all`}
+                  style={{ width: `${Math.min(pct, 100)}%` }}
+                />
+              </div>
 
-                  {/* Budget */}
-                  <span className="text-right font-mono text-gray-300">
-                    {e.budget.toLocaleString()}
-                  </span>
+              {/* Budget / Actual */}
+              <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+                <span>Budget: <span className="text-gray-300 font-mono">{row.budget}</span></span>
+                <span>Actual: <span className="text-gray-300 font-mono">{row.actual}</span></span>
+              </div>
 
-                  {/* Actual */}
-                  <span
-                    className={`text-right font-mono ${
-                      e.actual < 0 ? 'text-red-400' : 'text-green-400'
-                    }`}
-                  >
-                    {e.actual.toLocaleString()}
-                  </span>
-
-                  {/* Delta */}
-                  <span
-                    className={`text-right font-mono px-2 py-1 rounded-lg
-                      ${
-                        isOver
-                          ? 'bg-red-900/40 text-red-400'
-                          : 'bg-green-900/40 text-green-400'
-                      }`}
-                  >
-                    {e.delta >= 0 ? '+' : ''}
-                    {e.delta.toLocaleString()}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ))}
+              {/* Delta */}
+              <div
+                className={`text-[10px] font-semibold mt-0.5 text-right ${
+                  withinBudget ? "text-green-400" : "text-red-400"
+                }`}
+              >
+                Δ <span className="font-mono">{row.delta.toFixed(2)}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
-  );
-}
-
-/* Helper */
-function groupByPeriod(rows) {
-  return Object.values(
-    rows.reduce((acc, row) => {
-      if (!acc[row.period]) {
-        acc[row.period] = { period: row.period, entries: [] };
-      }
-      acc[row.period].entries.push(row);
-      return acc;
-    }, {})
   );
 }

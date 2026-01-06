@@ -161,7 +161,7 @@ FREQUENCY_MAP = {
     "monthly": relativedelta(months=1),
     "yearly": relativedelta(years=1),
 }
-def generate_forecast(entries, start_date=None, periods=12, simulate_years=1, time_frame="monthly"):
+def generate_forecast(entries,user_id, start_date=None, periods=12, simulate_years=1, time_frame="monthly"):
     """
     entries: list of dicts from DB query
     start_date: date to start the forecast (optional, default today)
@@ -228,7 +228,13 @@ def generate_forecast(entries, start_date=None, periods=12, simulate_years=1, ti
         })
 
     # Optionally calculate cumulative balance
+    
+        
     balance = 0
+    rows = execute_query("SELECT initial_balance from users where id = %s",(user_id,))
+    if len(rows)==1:
+        balance= rows[0]['initial_balance']
+    
     for p in forecast:
         p["opening_balance"] = balance
         balance += p["profit_loss"]
@@ -261,7 +267,7 @@ def get_entries_report(event, context):
 
         if not entries:
             return generate_response(200, {"data": []})
-        forecast = generate_forecast(entries, periods=12, simulate_years=1, time_frame="monthly")
+        forecast = generate_forecast(entries,user_id, periods=12, simulate_years=1, time_frame="monthly")
         return generate_response(200, {"data": forecast})
 
     except Exception as e:
@@ -299,7 +305,7 @@ def get_actuals_report(event, context):
                 SUM(
                     CASE
                         WHEN a.type = 'expense' THEN a.amount
-                        ELSE a.amount
+                        ELSE - a.amount
                     END
                 ), 0
             )                               AS actual,
@@ -314,7 +320,7 @@ def get_actuals_report(event, context):
         FROM entries e
         LEFT JOIN actuals a
             ON a.entry_id = e.id
-            AND TO_CHAR(a.actual_date, '%%Y-%%m') = %s
+            AND TO_CHAR(a.actual_date, 'YYYY-MM') = %s
         WHERE
             e.user_id = %s
             AND e.scenario_id = %s
