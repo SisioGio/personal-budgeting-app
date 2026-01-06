@@ -277,64 +277,61 @@ def get_actuals_report(event, context):
 
     user_id = event["requestContext"]["authorizer"]["principalId"]
 
-    scenario_id = (
-        event.get("queryStringParameters", {}) or {}
-    ).get("scenario_id")
+    qs = event.get("queryStringParameters") or {}
+    scenario_id = qs.get("scenario_id")
+    period = qs.get("period") 
 
-    if not scenario_id:
+    if not scenario_id or not period:
         return {
             "statusCode": 400,
-            "body": json.dumps({"msg": "scenario_id is required"})
+            "body": json.dumps({
+                "msg": "scenario_id and period (YYYY-MM) are required"
+            })
         }
 
     query = """
         SELECT
-            TO_CHAR(a.actual_date, 'YYYY-MM') AS period,
-            e.id                                AS entry_id,
-            e.name                              AS entry_name,
-            e.amount                            AS entry_budget,
-            SUM(
-                CASE
-                    WHEN a.type = 'expense' THEN -a.amount
-                    ELSE a.amount
-                END
-            )                                   AS actual_total
-        FROM actuals a
-        JOIN entries e ON e.id = a.entry_id
+            %s                              AS period,
+            e.id                            AS entry_id,
+            e.name                          AS entry_name,
+            e.amount                        AS budget,
+            COALESCE(
+                SUM(
+                    CASE
+                        WHEN a.type = 'expense' THEN a.amount
+                        ELSE a.amount
+                    END
+                ), 0
+            )                               AS actual,
+            (e.amount - COALESCE(
+                SUM(
+                    CASE
+                        WHEN a.type = 'expense' THEN a.amount
+                        ELSE a.amount
+                    END
+                ), 0
+            ))                              AS delta
+        FROM entries e
+        LEFT JOIN actuals a
+            ON a.entry_id = e.id
+            AND TO_CHAR(a.actual_date, '%%Y-%%m') = %s
         WHERE
             e.user_id = %s
             AND e.scenario_id = %s
         GROUP BY
-            period,
             e.id,
             e.name,
             e.amount
         ORDER BY
-            period ASC,
             e.name ASC
     """
-    logger.info("SQL PARAMS: user_id=%s scenario_id=%s", user_id, scenario_id)
-    rows = execute_query(query, params=(user_id, scenario_id))
 
-    # ---- Transform for frontend friendliness ----
-    report = []
+    params = (period, period, user_id, scenario_id)
 
-    for r in rows:
-        budget = r["entry_budget"]
-        actual = r["actual_total"] or 0
-        delta = actual - budget
+    logger.info("SQL PARAMS: %s", params)
 
-        report.append({
-            "period": r["period"],
-            "entry_id": r["entry_id"],
-            "entry_name": r["entry_name"],
-            "budget": budget,
-            "actual": actual,
-            "delta": delta
-        })
-
-    metrics.add_metric(name="ActualsReportGenerated", unit=MetricUnit.Count, value=1)
-    return generate_response(200,{"data":report})
+    rows = execute_query(query, params)
+    return generate_response(200,{"data":rows})
   
     
     

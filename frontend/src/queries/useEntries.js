@@ -14,7 +14,17 @@ export const useEntries = (scenarioId) =>
     },
   });
 
-
+export const useActVsBud = (scenarioId) =>
+  useQuery({
+    queryKey: ['actvsbud', scenarioId],
+    enabled: !!scenarioId,
+    queryFn: async () => {
+      const res = await apiClient.get('/private/report/actuals-vs-budget', {
+        params: { scenario_id: scenarioId },
+      });
+      return res.data.data;
+    },
+  });
 
   export const useForecast = ({
       scenarioId,

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from './../../utils/apiClient';
 import { useEntries } from '../../queries/useEntries';
 import { useScenario } from '../../utils/ScenarioContext';
+import ActualsVsBudget from './ActualsVsBudget';
 export default function ActualsManager() {
     const { scenarioId } = useScenario();
   const queryClient = useQueryClient();
@@ -93,7 +94,7 @@ export default function ActualsManager() {
   /* ------------------ RENDER ------------------ */
   return (
     <div className="space-y-6">
-
+      <ActualsVsBudget/>
       <div className="rounded-2xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6 shadow-xl border border-gray-700">
         <h3 className="font-mono text-blue-400 text-lg mb-4">
           Record Actual
