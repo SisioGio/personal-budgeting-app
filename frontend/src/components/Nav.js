@@ -1,60 +1,81 @@
-import React, { useState } from "react";
+import React from "react";
+import { NavLink } from "react-router-dom";
+import { useScenarios } from "../queries/useScenarios";
+import { useScenario } from "../utils/ScenarioContext";
 
-const MainNav = () => {
+export default function Nav() {
+  const { scenarioId, setScenarioId } = useScenario();
+  const { data: scenarios = [], isLoading } = useScenarios();
 
-  const [isOpen, setIsOpen] = useState(false);
-
-  const handleLinkClick = () => {
-    setIsOpen(false); // Close the mobile menu when a link is clicked
-  };
+  const tabs = [
+    { path: "/dashboard", label: "Dashboard" },
+    { path: "/settings", label: "Settings" },
+  ];
 
   return (
-    <nav className="custom-gradient-nav fixed top-0 left-0 w-full shadow-xl h-20 z-50 rounded-b-md bg-indigo-800 backdrop-blur-md transition-all duration-300 ease-in-out">
-      <div className=" mx-auto flex justify-around items-center px-6 h-full">
-        {/* Logo */}
-        <a
-          href="/"
-          className="text-3xl font-extrabold text-white tracking-wide hover:text-yellow-400 transition duration-300 transform"
-        >
-          <span className="text-white neon-text text-shadow-xl">ArchIntel</span>
-        </a>
+    <header className="sticky top-0 z-50 backdrop-blur-xl bg-black/40 border-b border-white/10">
+      <nav className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
 
-        {/* Mobile Menu Button */}
-        <button
-          className="xl:hidden text-white text-3xl focus:outline-none hover:text-yellow-400 transition duration-300"
-          onClick={() => setIsOpen(!isOpen)}
-          aria-label="Toggle menu"
-        >
-          ☰
-        </button>
+        {/* LOGO */}
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-fuchsia-500 to-indigo-500 shadow-lg shadow-fuchsia-500/40" />
+          <span className="text-2xl font-extrabold tracking-wide text-white">
+            Finbotix
+          </span>
+        </div>
 
-        {/* Nav Links */}
-        <ul
-  className={`z-30 absolute xl:static top-20 left-0 w-full xl:w-auto bg-black xl:bg-transparent xl:flex xl:items-center xl:space-x-6 px-6 py-4 xl:px-0 transition-all duration-300 ease-in-out transform ${
-    isOpen ? "block " : "hidden xl:block "
-  }`}
->
-  <li className="py-3 px-2  text-center hover:text-gold transition duration-300 transform  relative hover:bg-indigo-700 rounded-lg hover:bg-opacity-30 ">
-    <a href="/#home" onClick={handleLinkClick} className="text-white text-xl font-light hover:text-gray-100">
-      Home
-    </a>
-   
-  </li>
-<li className="py-3 px-2  text-center hover:text-gold transition duration-300 transform  relative hover:bg-indigo-700 rounded-lg hover:bg-opacity-30 ">
-    <a href="/modelli" onClick={handleLinkClick} className="text-white text-xl font-light hover:text-gray-100">
-      Modelli
-    </a>
-   
-  </li>
- 
- 
-</ul>
+        {/* CENTER NAV TABS */}
+        <div className="flex gap-2 bg-white/5 p-1 rounded-xl backdrop-blur">
+          {tabs.map((tab) => (
+            <NavLink
+              key={tab.path}
+              to={tab.path}
+              className={({ isActive }) =>
+                `
+                relative px-5 py-2 rounded-lg text-sm font-semibold transition-all
+                ${
+                  isActive
+                    ? "text-white bg-gradient-to-r from-indigo-500 to-fuchsia-500 shadow-md"
+                    : "text-gray-300 hover:text-white hover:bg-white/10"
+                }
+              `
+              }
+            >
+              {tab.label}
+            </NavLink>
+          ))}
+        </div>
 
-      </div>
+        {/* SCENARIO SELECTOR */}
+        <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl backdrop-blur border border-white/10">
+          <span className="text-xs uppercase tracking-wide text-gray-300">
+            Scenario
+          </span>
 
-      
-    </nav>
+          {isLoading ? (
+            <span className="text-sm text-gray-400">Loading…</span>
+          ) : (
+            <select
+              value={scenarioId ?? ""}
+              onChange={(e) => setScenarioId(e.target.value)}
+              className="
+                bg-transparent text-white text-sm font-medium
+                focus:outline-none cursor-pointer
+              "
+            >
+              <option value="" className="text-black">
+                Select
+              </option>
+              {scenarios.map((s) => (
+                <option key={s.id ?? s.code} value={s.id} className="text-black">
+                  {s.code}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+
+      </nav>
+    </header>
   );
-};
-
-export default MainNav;
+}

@@ -136,6 +136,7 @@ def get_entries_report(event, context):
                 e.type          AS entry_type,
                 e.frequency     AS entry_frequency,
                 e.start_date    AS entry_start_date,
+                e.end_date      AS entry_end_date,
                 e.amount        AS entry_amount,
                 e.scenario_id   AS entry_scenario_id,
                 e.category_id   AS entry_category_id,
@@ -153,6 +154,7 @@ def get_entries_report(event, context):
 
         df = pd.DataFrame(rows)
         df['entry_start_date'] = pd.to_datetime(df['entry_start_date'])
+        df['entry_end_date'] = pd.to_datetime(df['entry_end_date'])
         df['signed_amount'] = df.apply(
             lambda x: x['entry_amount'] if x['entry_type'] == 'income' else -x['entry_amount'], axis=1
         )
@@ -179,14 +181,19 @@ def get_entries_report(event, context):
             for _, row in df.iterrows():
                 recur_dates = []
                 entry_start = row['entry_start_date']
+                entry_end = row['entry_end_date']
                 freq = row['entry_frequency']
 
+                # Determine the effective end date for this entry
+                # Use entry's end_date if specified, otherwise use simulation end_date
+                effective_end = entry_end if pd.notna(entry_end) else end_date
+
                 if freq == 'daily':
-                    recur_dates = pd.date_range(start=entry_start, end=end_date, freq='D')
+                    recur_dates = pd.date_range(start=entry_start, end=effective_end, freq='D')
                 elif freq == 'weekly':
-                    recur_dates = pd.date_range(start=entry_start, end=end_date, freq='W-MON')
+                    recur_dates = pd.date_range(start=entry_start, end=effective_end, freq='W-MON')
                 elif freq == 'monthly':
-                    recur_dates = pd.date_range(start=entry_start, end=end_date, freq='MS')
+                    recur_dates = pd.date_range(start=entry_start, end=effective_end, freq='MS')
                 else:  # one-off
                     recur_dates = [entry_start]
 
@@ -199,7 +206,8 @@ def get_entries_report(event, context):
                         "category_id": row['category_id'],
                         "category_name": row['category_name'],
                         "entry_frequency": row['entry_frequency'],
-                        "entry_date": row['entry_start_date'].date().isoformat()
+                        "entry_date": row['entry_start_date'].date().isoformat(),
+                        "entry_end_date": row['entry_end_date'].date().isoformat()
                     })
 
             profit_loss = sum(

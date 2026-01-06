@@ -1,51 +1,70 @@
 import { React, useState, useEffect } from "react";
 import apiClient from "../../utils/apiClient";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useForecast } from '../../queries/useEntries';
+import { useScenarios } from '../../queries/useScenarios';
 
-export default function EntriesReport() {
+
+
+export default function EntriesReport({scenarioId}) {
+
+
+    const queryClient = useQueryClient();
+    
+
+
   const [timeFrame, setTimeFrame] = useState("monthly");
   const [periods, setPeriods] = useState(12);
   const [simulateYears, setSimulateYears] = useState(1);
-  const [scenarioId, setScenarioId] = useState("");
-  const [scenarios, setScenarios] = useState([]);
-  const [report, setReport] = useState([]);
-  const [loading, setLoading] = useState(false);
+
+
+ 
+
   const [expandedPeriod, setExpandedPeriod] = useState(null);
 
-  const fetchScenarios = async () => {
-    const res = await apiClient.get("/scenario");
-    setScenarios(res.data.data);
-    if (res.data.data?.length > 0) {
-      setScenarioId(res.data.data[0].id);
-    }
-  };
 
-  const fetchReport = async () => {
-    if (!scenarioId) return;
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({
-        scenario_id: scenarioId,
-        time_frame: timeFrame,
-        periods,
-        simulate_years: simulateYears,
-      });
-      const { data } = await apiClient.get(`/private/entries?${params}`);
-      setReport(data.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    data: report = [],
+    isFetching,
+  } = useForecast({
+    scenarioId,
+    timeFrame,
+    periods,
+    simulateYears,
+  });
 
-  useEffect(() => {
-    fetchScenarios();
-  }, []);
 
-  useEffect(() => {
-    fetchReport();
-  }, [scenarioId, timeFrame, periods, simulateYears]);
+  const { data: scenarios = [], isLoading } = useScenarios();
+
+
+
+//   const fetchReport = async () => {
+//     if (!scenarioId) return;
+//     setLoading(true);
+//     try {
+//       const params = new URLSearchParams({
+//         scenario_id: scenarioId,
+//         time_frame: timeFrame,
+//         periods,
+//         simulate_years: simulateYears,
+//       });
+//       const { data } = await apiClient.get(`/private/entries?${params}`);
+//       setReport(data.data);
+//     } catch (err) {
+//       console.error(err);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   useEffect(() => {
+//     fetchScenarios();
+//   }, []);
+
+//   useEffect(() => {
+//     fetchReport();
+//   }, [scenarioId, timeFrame, periods, simulateYears]);
 
   const calculateTotals = (entries) => {
     const totalIncome = entries
@@ -62,66 +81,10 @@ export default function EntriesReport() {
     <div className="p-6 bg-white rounded-lg shadow space-y-4">
       <h2 className="text-2xl font-bold">Entries Report</h2>
 
-      {/* Controls */}
-      <div className="flex flex-wrap gap-4 items-center">
-        <select
-          value={scenarioId}
-          onChange={(e) => setScenarioId(e.target.value)}
-          className="border rounded px-3 py-2 mb-4 w-full md:w-1/2"
-        >
-          <option value="">Select scenario</option>
-          {scenarios.map((s) => (
-            <option key={s.id ?? s.code} value={s.id ?? s.code}>
-              {s.code}
-            </option>
-          ))}
-        </select>
 
-        <div>
-          <label className="mr-2 font-medium">Time Frame:</label>
-          <select
-            className="border rounded px-2 py-1"
-            value={timeFrame}
-            onChange={(e) => setTimeFrame(e.target.value)}
-          >
-            <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="mr-2 font-medium">Periods:</label>
-          <input
-            type="number"
-            className="border rounded px-2 py-1 w-20"
-            value={periods}
-            min={1}
-            onChange={(e) => setPeriods(Number(e.target.value))}
-          />
-        </div>
-
-        <div>
-          <label className="mr-2 font-medium">Simulate Years:</label>
-          <input
-            type="number"
-            className="border rounded px-2 py-1 w-20"
-            value={simulateYears}
-            min={0}
-            onChange={(e) => setSimulateYears(Number(e.target.value))}
-          />
-        </div>
-
-        <button
-          className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700"
-          onClick={fetchReport}
-        >
-          Refresh
-        </button>
-      </div>
 
       {/* Report Table */}
-      {loading ? (
+      {isLoading ? (
         <p>Loading...</p>
       ) : report.length === 0 ? (
         <p>No data available</p>

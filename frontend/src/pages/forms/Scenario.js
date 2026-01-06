@@ -1,25 +1,33 @@
-import { useEffect, useState } from 'react';
-import { useAuth } from '../../utils/AuthContext';
+import { useState } from 'react';
 import apiClient from '../../utils/apiClient';
+import { useQueryClient, useMutation } from '@tanstack/react-query';
+import { useScenarios } from '../../queries/useScenarios';
 
 export default function ScenarioCRUD() {
-  const { user } = useAuth();
-  const [scenarios, setScenarios] = useState([]);
+  const queryClient = useQueryClient();
+  const { data: scenarios = [], isLoading } = useScenarios();
+
+  const [search, setSearch] = useState('');
   const [code, setCode] = useState('');
   const [description, setDescription] = useState('');
   const [editingCode, setEditingCode] = useState(null);
-  const [loading, setLoading] = useState(false);
 
-  const fetchScenarios = async () => {
-    setLoading(true);
-    const res = await apiClient.get('/scenario');
-    setScenarios(res.data.data);
-    setLoading(false);
-  };
+  const createScenario = useMutation({
+    mutationFn: (payload) => apiClient.post('/scenario', payload),
+    onSuccess: () => queryClient.invalidateQueries(['scenarios']),
+  });
+  const updateScenario = useMutation({
+    mutationFn: ({ code, description }) => apiClient.put('/scenario', { code, description }),
+    onSuccess: () => queryClient.invalidateQueries(['scenarios']),
+  });
+  const deleteScenario = useMutation({
+    mutationFn: (code) => apiClient.delete('/scenario', { data: { code } }),
+    onSuccess: () => queryClient.invalidateQueries(['scenarios']),
+  });
 
-  useEffect(() => {
-    fetchScenarios();
-  }, []);
+  const filtered = scenarios.filter((s) =>
+    s.code.toLowerCase().includes(search.toLowerCase())
+  );
 
   const resetForm = () => {
     setCode('');
@@ -27,127 +35,122 @@ export default function ScenarioCRUD() {
     setEditingCode(null);
   };
 
-  const handleCreate = async () => {
+  const handleSubmit = () => {
     if (!code.trim()) return;
-    await apiClient.post('/scenario', { code, description });
+    if (editingCode) updateScenario.mutate({ code: editingCode, description });
+    else createScenario.mutate({ code, description });
     resetForm();
-    fetchScenarios();
   };
 
-  const handleUpdate = async () => {
-    if (!editingCode) return;
-    await apiClient.put('/scenario', {
-      code: editingCode,
-      description,
-    });
-    resetForm();
-    fetchScenarios();
+  const startEdit = (s) => {
+    setEditingCode(s.code);
+    setCode(s.code);
+    setDescription(s.description || '');
   };
 
-  const handleDelete = async (scenarioCode) => {
-    await apiClient.delete('/scenario', {
-      data: { code: scenarioCode },
-    });
-    fetchScenarios();
-  };
-
-  const startEdit = (scenario) => {
-    setEditingCode(scenario.code);
-    setCode(scenario.code);
-    setDescription(scenario.description || '');
-  };
+  if (isLoading)
+    return <p className="p-4 text-center text-gray-400">Loading scenarios...</p>;
 
   return (
-    <div className="mx-auto p-6">
-     
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+    <div className="space-y-6">
+      {/* Input + Buttons */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
         <input
-          className="border rounded px-3 py-2 focus:outline-none focus:ring"
-          placeholder="Scenario code"
           value={code}
-          disabled={!!editingCode}
           onChange={(e) => setCode(e.target.value)}
+          placeholder="Scenario code"
+          disabled={!!editingCode}
+          className="px-4 py-2 rounded-lg border border-gray-700 bg-gray-900 text-white placeholder-gray-400 focus:outline-none focus:ring focus:ring-blue-500 transition"
         />
         <input
-          className="border rounded px-3 py-2 focus:outline-none focus:ring md:col-span-2"
-          placeholder="Description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
+          placeholder="Description"
+          className="px-4 py-2 rounded-lg border border-gray-700 bg-gray-900 text-white placeholder-gray-400 focus:outline-none focus:ring focus:ring-blue-500 transition"
         />
-      </div>
-
-      <div className="flex gap-2 mb-8">
-        {editingCode ? (
-          <>
-            <button
-              onClick={handleUpdate}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-            >
-              Update
-            </button>
-            <button
-              onClick={resetForm}
-              className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
-            >
-              Cancel
-            </button>
-          </>
-        ) : (
+        <button
+          onClick={handleSubmit}
+          className={`px-4 py-2 rounded-lg text-white font-semibold ${
+            editingCode ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-green-600 hover:bg-green-700'
+          } transition`}
+        >
+          {editingCode ? 'Update' : 'Add'}
+        </button>
+        {editingCode && (
           <button
-            onClick={handleCreate}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+            onClick={resetForm}
+            className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white font-semibold transition"
           >
-            Create
+            Cancel
           </button>
         )}
       </div>
 
-      <div className="bg-white rounded shadow">
-        {loading ? (
-          <div className="p-4 text-center text-gray-500">Loading...</div>
-        ) : (
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-gray-100 text-left">
-                <th className="p-3 font-medium">Code</th>
-                <th className="p-3 font-medium">Description</th>
-                <th className="p-3 font-medium w-40"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {scenarios.map((s) => (
-                <tr key={s.code} className="border-t">
-                  <td className="p-3 font-mono">{s.code}</td>
-                  <td className="p-3">{s.description}</td>
-                  <td className="p-3">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => startEdit(s)}
-                        className="text-sm px-3 py-1 rounded bg-yellow-500 text-white hover:bg-yellow-600"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(s.code)}
-                        className="text-sm px-3 py-1 rounded bg-red-600 text-white hover:bg-red-700"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {scenarios.length === 0 && (
-                <tr>
-                  <td colSpan={3} className="p-4 text-center text-gray-500">
-                    No scenarios found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        )}
+      {/* Search */}
+      <input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search scenarios..."
+        className="w-full px-4 py-2 rounded-lg border border-gray-700 bg-gray-900 text-white placeholder-gray-400 focus:outline-none focus:ring focus:ring-blue-500 transition"
+      />
+
+      {/* Scrollable Cards */}
+     <div className="rounded-xl border border-gray-700 bg-gray-900/70 overflow-hidden">
+
+  {/* Header */}
+  <div className="grid grid-cols-[220px_1fr_auto] px-4 py-2 text-xs uppercase tracking-wide text-gray-400 bg-gray-800 sticky top-0 z-10">
+    <span>Scenario</span>
+    <span>Description</span>
+    <span className="pr-2">Actions</span>
+  </div>
+
+  {/* Scrollable body */}
+  <div className="max-h-[600px] overflow-y-auto divide-y divide-gray-800">
+
+    {filtered.length === 0 && (
+      <div className="p-6 text-center text-gray-400">
+        No scenarios found
       </div>
+    )}
+
+    {filtered.map((s) => (
+      <div
+        key={s.code}
+        className="group grid grid-cols-[220px_1fr_auto] items-center px-4 py-3 hover:bg-gray-800 transition"
+      >
+        {/* Code */}
+        <div className="flex items-center gap-3">
+          <span className="w-2 h-2 rounded-full bg-fuchsia-500/80" />
+          <span className="font-mono text-sm text-blue-400 truncate">
+            {s.code}
+          </span>
+        </div>
+
+        {/* Description */}
+        <p className="text-sm text-gray-300 truncate pr-4">
+          {s.description || "—"}
+        </p>
+
+        {/* Actions */}
+        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition">
+          <button
+            onClick={() => startEdit(s)}
+            className="px-2 py-1 text-xs rounded bg-yellow-500/90 hover:bg-yellow-500 text-white"
+          >
+            Edit
+          </button>
+          <button
+            onClick={() => deleteScenario.mutate(s.code)}
+            className="px-2 py-1 text-xs rounded bg-red-600/90 hover:bg-red-600 text-white"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
+
     </div>
   );
 }

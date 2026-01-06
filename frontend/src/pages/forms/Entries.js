@@ -1,14 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import apiClient from '../../utils/apiClient';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEntries } from '../../queries/useEntries';
+import { useScenarios } from '../../queries/useScenarios';
+import { useCategories } from '../../queries/useCategories';
 
-export default function EntriesCRUD() {
-  const [entries, setEntries] = useState([]);
-  const [scenarios, setScenarios] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [scenarioId, setScenarioId] = useState('');
+export default function EntriesCRUD({ scenarioId }) {
+  const queryClient = useQueryClient();
   const [editingId, setEditingId] = useState(null);
-  const [loading, setLoading] = useState(false);
-
   const [form, setForm] = useState({
     name: '',
     type: 'income',
@@ -18,79 +17,21 @@ export default function EntriesCRUD() {
     amount: '',
     category_id: '',
   });
+  const [search, setSearch] = useState('');
 
-  const fetchScenarios = async () => {
-    const res = await apiClient.get('/scenario');
-    setScenarios(res.data.data);
+  const { data: categories = [] } = useCategories();
+  const { data: entries = [], isLoading } = useEntries(scenarioId);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value, ...(name === 'start_date' ? { end_date: value } : {}) });
   };
 
-  const fetchCategories = async () => {
-    const res = await apiClient.get('/category');
-    setCategories(res.data.data);
-  };
+  const resetForm = () => setForm({ name: '', type: 'income', frequency: 'monthly', start_date: '', end_date: '', amount: '', category_id: '' }, setEditingId(null));
 
-  const fetchEntries = async (sid) => {
-    if (!sid) return;
-    setLoading(true);
-    const res = await apiClient.get('/entries', {
-      params: { scenario_id: sid },
-    });
-    setEntries(res.data.data);
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchScenarios();
-    fetchCategories();
-  }, []);
-
-  useEffect(() => {
-    fetchEntries(scenarioId);
-  }, [scenarioId]);
-
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
-
-  const resetForm = () => {
-    setForm({
-      name: '',
-      type: 'income',
-      frequency: 'monthly',
-      start_date: '',
-      end_date: '',
-      amount: '',
-      category_id: '',
-    });
-    setEditingId(null);
-  };
-
-  const handleCreate = async () => {
-    await apiClient.post('/entries', {
-      ...form,
-      amount: Number(form.amount),
-      scenario_id: scenarioId,
-    });
-    resetForm();
-    fetchEntries(scenarioId);
-  };
-
-  const handleUpdate = async () => {
-    await apiClient.put('/entries', {
-      id: editingId,
-      amount: Number(form.amount),
-      start_date: form.start_date,
-      end_date: form.end_date,
-      type: form.type,
-      frequency: form.frequency
-    });
-    resetForm();
-    fetchEntries(scenarioId);
-  };
-
-  const handleDelete = async (id) => {
-    await apiClient.delete('/entries', { data: { id } });
-    fetchEntries(scenarioId);
-  };
+  const createEntry = useMutation({ mutationFn: (payload) => apiClient.post('/entries', payload), onSuccess: () => { queryClient.invalidateQueries(['entries', scenarioId]); resetForm(); } });
+  const updateEntry = useMutation({ mutationFn: (payload) => apiClient.put('/entries', payload), onSuccess: () => { queryClient.invalidateQueries(['entries', scenarioId]); resetForm(); } });
+  const deleteEntry = useMutation({ mutationFn: (id) => apiClient.delete('/entries', { data: { id } }), onSuccess: () => queryClient.invalidateQueries(['entries', scenarioId]) });
 
   const startEdit = (e) => {
     setEditingId(e.entry_id);
@@ -105,173 +46,292 @@ export default function EntriesCRUD() {
     });
   };
 
+  const handleSubmit = () => {
+    const payload = { ...form, amount: Number(form.amount), scenario_id: scenarioId };
+    editingId ? updateEntry.mutate({ ...payload, id: editingId }) : createEntry.mutate(payload);
+  };
+
+  const filtered = entries.filter((e) => e.entry_name.toLowerCase().includes(search.toLowerCase()));
+
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      
-      <select
-        value={scenarioId}
-        onChange={(e) => setScenarioId(e.target.value)}
-        className="border rounded px-3 py-2 mb-4 w-full md:w-1/2"
-      >
-        <option value="">Select scenario</option>
-        {scenarios.map((s) => (
-          <option key={s.id ?? s.code} value={s.id}>
-            {s.code}
-          </option>
-        ))}
-      </select>
+    <div className="space-y-4">
+      {/* Input Form */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
 
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-3 mb-4">
-        <input
-          name="name"
-          placeholder="Name"
-          value={form.name}
-          onChange={handleChange}
-          className="border rounded px-2 py-1 md:col-span-2"
-        />
+  <input
+    name="name"
+    value={form.name}
+    onChange={handleChange}
+    placeholder="Entry name"
+    className="px-4 py-2 rounded-lg border border-gray-700 bg-gray-900 text-white placeholder-gray-400 focus:outline-none focus:ring focus:ring-blue-500 transition"
+  />
 
-        <select
-          name="type"
-          value={form.type}
-          onChange={handleChange}
-          className="border rounded px-2 py-1"
-        >
-          <option value="income">Income</option>
-          <option value="expense">Expense</option>
-        </select>
+  <input
+    type="number"
+    name="amount"
+    value={form.amount}
+    onChange={handleChange}
+    placeholder="Amount"
+    className="px-4 py-2 rounded-lg border border-gray-700 bg-gray-900 text-white placeholder-gray-400 focus:outline-none focus:ring focus:ring-blue-500 transition"
+  />
 
-        <select
-          name="frequency"
-          value={form.frequency}
-          onChange={handleChange}
-          className="border rounded px-2 py-1"
-        >
-          <option value="one_time">One Time</option>
-          <option value="monthly">Monthly</option>
-          <option value="yearly">Yearly</option>
-        </select>
+  <select
+    name="category_id"
+    value={form.category_id}
+    onChange={handleChange}
+    className="px-4 py-2 rounded-lg border border-gray-700 bg-gray-900 text-white focus:outline-none focus:ring focus:ring-blue-500 transition"
+  >
+    <option value="">Category</option>
+    {categories.map((c) => (
+      <option key={c.id} value={c.id}>{c.name}</option>
+    ))}
+  </select>
 
-        <input
-          type="date"
-          name="start_date"
-          value={form.start_date}
-          onChange={handleChange}
-          className="border rounded px-2 py-1"
-        />
+  <button
+    onClick={handleSubmit}
+    disabled={!scenarioId}
+    className={`px-4 py-2 rounded-lg text-white font-semibold ${
+      editingId
+        ? 'bg-indigo-600 hover:bg-indigo-700'
+        : 'bg-green-600 hover:bg-green-700'
+    } transition`}
+  >
+    {editingId ? 'Update' : 'Add Entry'}
+  </button>
 
-        <input
-          type="date"
-          name="end_date"
-          value={form.end_date}
-          onChange={handleChange}
-          className="border rounded px-2 py-1"
-        />
+  {editingId && (
+    <button
+      onClick={resetForm}
+      className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white font-semibold transition"
+    >
+      Cancel
+    </button>
+  )}
 
-        <input
-          type="number"
-          name="amount"
-          placeholder="Amount"
-          value={form.amount}
-          onChange={handleChange}
-          className="border rounded px-2 py-1"
-        />
+  {/* Advanced row */}
+ <div className="md:col-span-4 grid grid-cols-1 md:grid-cols-5 gap-3">
 
-        <select
-          name="category_id"
-          value={form.category_id}
-          onChange={handleChange}
-          className="border rounded px-2 py-1 md:col-span-2"
-        >
-          <option value="">Category</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-      </div>
+  {/* Type */}
+      <div className="md:col-span-1">
+      <p className="text-xs text-gray-400 mb-1 ml-1">Type</p>
 
-      <div className="flex gap-2 mb-6">
-        {editingId ? (
-          <>
-            <button
-              onClick={handleUpdate}
-              className="bg-blue-600 text-white px-4 py-2 rounded"
-            >
-              Update
-            </button>
-            <button
-              onClick={resetForm}
-              className="bg-gray-300 px-4 py-2 rounded"
-            >
-              Cancel
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={handleCreate}
-            className="bg-green-600 text-white px-4 py-2 rounded"
-            disabled={!scenarioId}
+      <div className="grid grid-cols-2 gap-2">
+        {['income', 'expense'].map((type) => (
+          <label
+            key={type}
+            className={`cursor-pointer px-4 py-2 rounded-lg border text-center font-semibold transition
+              ${
+                form.type === type
+                  ? type === 'income'
+                    ? 'bg-green-600/20 border-green-500 text-green-400'
+                    : 'bg-red-600/20 border-red-500 text-red-400'
+                  : 'bg-gray-900 border-gray-700 text-gray-400 hover:border-gray-500'
+              }`}
           >
-            Add Entry
+            <input
+              type="checkbox"
+              checked={form.type === type}
+              onChange={() =>
+                handleChange({ target: { name: 'type', value: type } })
+              }
+              className="hidden"
+            />
+            {type === 'income' ? '💰 Income' : '💸 Expense'}
+          </label>
+        ))}
+      </div>
+    </div>
+
+
+  {/* Frequency */}
+      <div className="md:col-span-2">
+      <p className="text-xs text-gray-400 mb-1 ml-1">Frequency</p>
+
+      <div className="grid grid-cols-3 gap-2">
+        {[
+          { value: 'one_time', label: '⏱ One-time' },
+          { value: 'monthly', label: '📅 Monthly' },
+          { value: 'yearly', label: '🗓 Yearly' },
+        ].map((f) => (
+          <label
+            key={f.value}
+            className={`cursor-pointer px-4 py-2 rounded-lg border text-center font-medium transition
+              ${
+                form.frequency === f.value
+                  ? 'bg-blue-600/20 border-blue-500 text-blue-400'
+                  : 'bg-gray-900 border-gray-700 text-gray-400 hover:border-gray-500'
+              }`}
+          >
+            <input
+              type="checkbox"
+              checked={form.frequency === f.value}
+              onChange={() =>
+                handleChange({ target: { name: 'frequency', value: f.value } })
+              }
+              className="hidden"
+            />
+            {f.label}
+          </label>
+        ))}
+      </div>
+    </div>
+
+<div className="grid grid-cols-1 md:grid-cols-2 md:col-span-2 gap-2">
+
+
+    <div className="relative">
+      <span className="text-xs text-gray-400 mb-1 ml-1">
+        Start date
+      </span>
+<div className="grid grid-cols-1 gap-2">
+<input
+        type="date"
+        name="start_date"
+        value={form.start_date}
+        onChange={(e) => {
+          handleChange(e);
+
+          // Auto-fill end date for one-time
+          if (form.frequency === 'one_time') {
+            handleChange({
+              target: {
+                name: 'end_date',
+                value: e.target.value,
+              },
+            });
+          }
+        }}
+        className="w-full px-4 py-2 rounded-xl border border-gray-700 bg-gray-900 text-white
+                  focus:outline-none focus:ring focus:ring-blue-500 transition"
+      />
+
+</div>
+      
+    </div>
+
+    <div className="relative">
+      <span className="text-xs text-gray-400 mb-1 ml-1">
+        End date
+      </span>
+      <div className="grid grid-cols-1 gap-2">
+      <input
+              type="date"
+              name="end_date"
+              value={form.end_date}
+              onChange={handleChange}
+              disabled={form.frequency === 'one_time'}
+              className={`w-full px-4 py-2 rounded-xl border transition
+                ${
+                  form.frequency === 'one_time'
+                    ? 'bg-gray-800 border-gray-800 text-gray-500 cursor-not-allowed'
+                    : 'bg-gray-900 border-gray-700 text-white focus:ring focus:ring-blue-500'
+                }`}
+            />
+
+      </div>
+      
+
+      {form.frequency === 'one_time' && (
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">
+          Auto
+        </span>
+      )}
+    </div>
+
+
+</div>
+
+
+
+
+</div>
+
+</div>
+
+
+    <input
+  placeholder="Search entries..."
+  value={search}
+  onChange={(e) => setSearch(e.target.value)}
+  className="w-full px-4 py-2 rounded-lg border border-gray-700 bg-gray-900 text-white placeholder-gray-400 focus:outline-none focus:ring focus:ring-blue-500 transition"
+/>
+
+  
+      <div className="rounded-xl border border-gray-700 bg-gray-900/70 overflow-hidden">
+
+  {/* Header */}
+  <div className="grid grid-cols-[1.5fr_120px_120px_140px_120px_auto] px-4 py-2 text-xs uppercase tracking-wide text-gray-400 bg-gray-800 sticky top-0 z-10">
+    <span>Name</span>
+    <span>Type</span>
+    <span>Freq</span>
+    <span>Dates</span>
+    <span className="text-right">Amount</span>
+    <span />
+  </div>
+
+  {/* Body */}
+  <div className="max-h-[600px] overflow-y-auto divide-y divide-gray-800">
+
+    {filtered.length === 0 && (
+      <div className="p-6 text-center text-gray-400">
+        No entries found
+      </div>
+    )}
+
+    {filtered.map((e) => (
+      <div
+        key={e.entry_id}
+        className="group grid grid-cols-[1.5fr_120px_120px_140px_120px_auto] items-center px-4 py-3 hover:bg-gray-800 transition"
+      >
+        {/* Name */}
+        <span className="text-blue-400 font-medium truncate">
+          {e.entry_name}
+        </span>
+
+        {/* Type */}
+        <span className={`text-xs font-semibold ${
+          e.entry_type === 'income' ? 'text-green-400' : 'text-red-400'
+        }`}>
+          {e.entry_type}
+        </span>
+
+        {/* Frequency */}
+        <span className="text-xs text-gray-300">
+          {e.entry_frequency}
+        </span>
+
+        {/* Dates */}
+        <span className="text-xs text-gray-400">
+          {e.entry_start_date} → {e.entry_end_date}
+        </span>
+
+        {/* Amount */}
+        <span className={`font-mono text-right ${
+          e.entry_type === 'income' ? 'text-green-400' : 'text-red-400'
+        }`}>
+          {e.entry_amount}
+        </span>
+
+        {/* Actions */}
+        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition">
+          <button
+            onClick={() => startEdit(e)}
+            className="px-2 py-1 text-xs rounded bg-yellow-500/90 hover:bg-yellow-500 text-white"
+          >
+            Edit
           </button>
-        )}
+          <button
+            onClick={() => deleteEntry.mutate(e.entry_id)}
+            className="px-2 py-1 text-xs rounded bg-red-600/90 hover:bg-red-600 text-white"
+          >
+            Delete
+          </button>
+        </div>
       </div>
+    ))}
+  </div>
+</div>
 
-      <div className="bg-white rounded shadow">
-        <table className="w-full">
-          <thead className="bg-gray-100">
-            <tr>
-
-              <th className="p-2 text-left">Name</th>
-              <th className="p-2">Type</th>
-              <th className="p-2">Frequency</th>
-              <th className="p-2">Category</th>
-              <th className="p-2">Start</th>
-              <th className="p-2">End</th>
-
-              <th className="p-2">Amount</th>
-              <th className="p-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {entries.map((e) => (
-              <tr key={e.id} className="border-t">
-                <td className="p-2">{e.entry_name}</td>
-                <td className="p-2 text-center">{e.entry_type}</td>
-                <td className="p-2 text-center">{e.entry_frequency}</td>
-                <td className="p-2 text-center">{e.category_name}</td>
-                <td className="p-2 text-center">{e.entry_start_date}</td>
-                <td className="p-2 text-center">{e.entry_end_date}</td>
-                <td className="p-2 text-right font-mono">{e.entry_amount}</td>
-                <td className="p-2">
-                  <div className="flex gap-2 justify-center">
-                    <button
-                      onClick={() => startEdit(e)}
-                      className="bg-yellow-500 text-white px-2 py-1 rounded text-sm"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(e.id)}
-                      className="bg-red-600 text-white px-2 py-1 rounded text-sm"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {!loading && entries.length === 0 && (
-              <tr>
-                <td colSpan={5} className="p-4 text-center text-gray-500">
-                  No entries found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
     </div>
   );
 }
