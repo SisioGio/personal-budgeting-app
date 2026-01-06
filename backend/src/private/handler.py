@@ -20,6 +20,7 @@ import uuid
 from utils import *
 from db import *
 
+from dateutil.relativedelta import relativedelta
 
 dynamodb = boto3.resource('dynamodb')
 load_dotenv()
@@ -106,6 +107,108 @@ def signin(event, context):
 
 
 
+
+def get_entries(user_id,scenario_id):
+    # Fetch entries
+    query = """
+        SELECT
+            e.id            AS entry_id,
+            e.name          AS entry_name,
+            e.type          AS entry_type,
+            e.frequency     AS entry_frequency,
+            e.start_date    AS entry_start_date,
+            e.end_date      AS entry_end_date,
+            e.amount        AS entry_amount,
+            e.scenario_id   AS entry_scenario_id,
+            e.category_id   AS entry_category_id,
+            c.id            AS category_id,
+            c.name          AS category_name
+        FROM entries AS e
+        JOIN category AS c
+            ON e.category_id = c.id
+        WHERE e.user_id = %s AND e.scenario_id = %s
+        ORDER BY e.start_date
+    """
+    rows = execute_query(query, (user_id, scenario_id))
+    return rows
+
+FREQUENCY_MAP = {
+    "one_time": None,   # occurs once
+    "monthly": relativedelta(months=1),
+    "yearly": relativedelta(years=1),
+}
+def generate_forecast(entries, start_date=None, periods=12, simulate_years=1, time_frame="monthly"):
+    """
+    entries: list of dicts from DB query
+    start_date: date to start the forecast (optional, default today)
+    periods: number of periods per year (12 for monthly)
+    simulate_years: how many years to simulate
+    time_frame: 'monthly', 'quarterly', 'yearly'
+    """
+    if start_date is None:
+        start_date = datetime.today().replace(day=1)
+
+    # Determine the end date
+    if time_frame == "monthly":
+        delta = relativedelta(months=1)
+    elif time_frame == "quarterly":
+        delta = relativedelta(months=3)
+    elif time_frame == "yearly":
+        delta = relativedelta(years=1)
+    else:
+        raise ValueError("Invalid time_frame")
+
+    total_periods = periods * simulate_years
+    forecast = []
+
+    for i in range(total_periods):
+        period_start = start_date + i * delta
+        period_end = period_start + delta - timedelta(days=1)
+        
+        period_start = datetime(period_start.year, period_start.month, period_start.day)
+        period_end = datetime(period_end.year, period_end.month, period_end.day, 23, 59, 59)
+
+
+        period_entries = []
+
+        for e in entries:
+            freq = e["entry_frequency"]
+            freq_delta = FREQUENCY_MAP.get(freq)
+
+            # Only add if this period should include the entry
+            e_start = e["entry_start_date"]
+            e_end = e["entry_end_date"] if e["entry_end_date"] else e_start
+            
+            # repeat logic
+            current = e_start
+            while freq_delta and current <= period_end.date():
+                if period_start.date() <= current <= period_end.date():
+                    period_entries.append({**e, "entry_date": current})
+                current += freq_delta
+
+            # one_time entries
+            if freq == "one_time" and period_start.date() <= e_start <= period_end.date():
+                period_entries.append({**e, "entry_date": e_start})
+
+        forecast.append({
+            "period_start": period_start.strftime("%Y-%m-%d"),
+            "period_end": period_end.strftime("%Y-%m-%d"),
+            "entries": period_entries,
+            "opening_balance": 0,  # can be calculated cumulatively
+            "closing_balance": 0,
+            "profit_loss": sum(e["entry_amount"] if e["entry_type"]=="income" else -e["entry_amount"] for e in period_entries)
+        })
+
+    # Optionally calculate cumulative balance
+    balance = 0
+    for p in forecast:
+        p["opening_balance"] = balance
+        balance += p["profit_loss"]
+        p["closing_balance"] = balance
+
+    return forecast
+
+    
 @tracer.capture_lambda_handler
 @metrics.log_metrics
 def get_entries_report(event, context):
@@ -122,115 +225,23 @@ def get_entries_report(event, context):
             return generate_response(400, {"error": "scenario_id is required"})
 
         freq_map = {"daily": "D", "weekly": "W-MON", "monthly": "MS"}  # MS = Month Start
-        default_periods = {"daily": 30, "weekly": 12, "monthly": 12}
+
 
         if time_frame not in freq_map:
             return generate_response(400, {"error": "time_frame must be daily, weekly, or monthly"})
+        entries = get_entries(user_id,scenario_id)
 
-
-        # Fetch entries
-        query = """
-            SELECT
-                e.id            AS entry_id,
-                e.name          AS entry_name,
-                e.type          AS entry_type,
-                e.frequency     AS entry_frequency,
-                e.start_date    AS entry_start_date,
-                e.end_date      AS entry_end_date,
-                e.amount        AS entry_amount,
-                e.scenario_id   AS entry_scenario_id,
-                e.category_id   AS entry_category_id,
-                c.id            AS category_id,
-                c.name          AS category_name
-            FROM entries AS e
-            JOIN category AS c
-                ON e.category_id = c.id
-            WHERE e.user_id = %s AND e.scenario_id = %s
-            ORDER BY e.start_date
-        """
-        rows = execute_query(query, (user_id, scenario_id))
-        if not rows:
+        if not entries:
             return generate_response(200, {"data": []})
 
-        df = pd.DataFrame(rows)
-        df['entry_start_date'] = pd.to_datetime(df['entry_start_date'])
-        df['entry_end_date'] = pd.to_datetime(df['entry_end_date'])
-        df['signed_amount'] = df.apply(
-            lambda x: x['entry_amount'] if x['entry_type'] == 'income' else -x['entry_amount'], axis=1
-        )
+        forecast = generate_forecast(entries, periods=12, simulate_years=3, time_frame="monthly")
 
-        # Align start/end for periods naturally
-        start_date = df['entry_start_date'].min()
-        end_date = df['entry_start_date'].max() + pd.DateOffset(years=simulate_years)
-        period_idx = pd.date_range(start=start_date, end=end_date, freq=freq_map[time_frame])
+        
+        
+        
 
-        report = []
-
-        for period_start in period_idx:
-            if time_frame == 'daily':
-                period_end = period_start
-            elif time_frame == 'weekly':
-                period_end = period_start + pd.DateOffset(days=6)
-            elif time_frame == 'monthly':
-                # Get last day of month
-                next_month = period_start + pd.DateOffset(months=1)
-                period_end = next_month - pd.Timedelta(days=1)
-
-            # Select entries in this period (simulate recurring)
-            entries_in_period = []
-            for _, row in df.iterrows():
-                recur_dates = []
-                entry_start = row['entry_start_date']
-                entry_end = row['entry_end_date']
-                freq = row['entry_frequency']
-
-                # Determine the effective end date for this entry
-                # Use entry's end_date if specified, otherwise use simulation end_date
-                effective_end = entry_end if pd.notna(entry_end) else end_date
-
-                if freq == 'daily':
-                    recur_dates = pd.date_range(start=entry_start, end=effective_end, freq='D')
-                elif freq == 'weekly':
-                    recur_dates = pd.date_range(start=entry_start, end=effective_end, freq='W-MON')
-                elif freq == 'monthly':
-                    recur_dates = pd.date_range(start=entry_start, end=effective_end, freq='MS')
-                else:  # one-off
-                    recur_dates = [entry_start]
-
-                if any((d >= period_start) and (d <= period_end) for d in recur_dates):
-                    entries_in_period.append({
-                        "entry_id": row['entry_id'],
-                        "entry_name": row['entry_name'],
-                        "entry_type": row['entry_type'],
-                        "entry_amount": row['entry_amount'],
-                        "category_id": row['category_id'],
-                        "category_name": row['category_name'],
-                        "entry_frequency": row['entry_frequency'],
-                        "entry_date": row['entry_start_date'].date().isoformat(),
-                        "entry_end_date": row['entry_end_date'].date().isoformat()
-                    })
-
-            profit_loss = sum(
-                e['entry_amount'] if e['entry_type'] == 'income' else -e['entry_amount'] 
-                for e in entries_in_period
-            )
-            opening_balance = report[-1]['closing_balance'] if report else 0
-            closing_balance = opening_balance + profit_loss
-            pct_change = ((closing_balance - opening_balance) / opening_balance * 100) if opening_balance != 0 else 0
-
-            report.append({
-                "period_start": period_start.date().isoformat(),
-                "period_end": period_end.date().isoformat(),
-                "opening_balance": opening_balance,
-                "closing_balance": closing_balance,
-                "profit_loss": profit_loss,
-                "%_change": pct_change,
-                "entries": entries_in_period
-            })
-
-
-
-        return generate_response(200, {"data": report})
+       
+        return generate_response(200, {"data": forecast})
 
     except Exception as e:
         logger.exception("Failed to generate entries report")
@@ -254,5 +265,7 @@ def generate_response(statusCode,message):
 def decimal_default(obj):
     if isinstance(obj, Decimal):
         return float(obj)
-    raise TypeError
+    if isinstance(obj, (date, datetime)):
+        return obj.isoformat()  # "YYYY-MM-DD"
+    raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
 

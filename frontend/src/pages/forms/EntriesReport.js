@@ -4,11 +4,11 @@ import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForecast } from '../../queries/useEntries';
 import { useScenarios } from '../../queries/useScenarios';
+import { useScenario } from '../../utils/ScenarioContext';
 
 
-
-export default function EntriesReport({scenarioId}) {
-
+export default function EntriesReport() {
+const { scenarioId } = useScenario();
 
     const queryClient = useQueryClient();
     
@@ -39,32 +39,6 @@ export default function EntriesReport({scenarioId}) {
 
 
 
-//   const fetchReport = async () => {
-//     if (!scenarioId) return;
-//     setLoading(true);
-//     try {
-//       const params = new URLSearchParams({
-//         scenario_id: scenarioId,
-//         time_frame: timeFrame,
-//         periods,
-//         simulate_years: simulateYears,
-//       });
-//       const { data } = await apiClient.get(`/private/entries?${params}`);
-//       setReport(data.data);
-//     } catch (err) {
-//       console.error(err);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   useEffect(() => {
-//     fetchScenarios();
-//   }, []);
-
-//   useEffect(() => {
-//     fetchReport();
-//   }, [scenarioId, timeFrame, periods, simulateYears]);
 
   const calculateTotals = (entries) => {
     const totalIncome = entries
@@ -78,30 +52,28 @@ export default function EntriesReport({scenarioId}) {
   };
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow space-y-4">
-      <h2 className="text-2xl font-bold">Entries Report</h2>
-
-
+    <div className="bg-gray-900 rounded-2xl shadow-lg p-6 col-span-1 md:col-span-2">
+      <h2 className="text-green-400 font-bold mb-4">Monthly Forecast Report</h2>
 
       {/* Report Table */}
       {isLoading ? (
-        <p>Loading...</p>
+        <p className="text-gray-400">Loading...</p>
       ) : report.length === 0 ? (
-        <p>No data available</p>
+        <p className="text-gray-400">No data available</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse border border-gray-200">
+          <table className="w-full border-collapse">
             <thead>
-              <tr className="bg-gray-100">
-                <th className="border px-3 py-2">Period</th>
-                <th className="border px-3 py-2">Opening</th>
-                <th className="border px-3 py-2">Profit/Loss</th>
-                <th className="border px-3 py-2">Closing</th>
-                <th className="border px-3 py-2">% Change</th>
-                <th className="border px-3 py-2">Total Income</th>
-                <th className="border px-3 py-2">Total Expenses</th>
-                <th className="border px-3 py-2">Net</th>
-                <th className="border px-3 py-2">Details</th>
+              <tr className="bg-gray-800 text-gray-300">
+                <th className="border border-gray-700 px-3 py-2 text-left">Period</th>
+                <th className="border border-gray-700 px-3 py-2 text-right">Opening</th>
+                <th className="border border-gray-700 px-3 py-2 text-right">Profit/Loss</th>
+                <th className="border border-gray-700 px-3 py-2 text-right">Closing</th>
+                <th className="border border-gray-700 px-3 py-2 text-right">% Change</th>
+                <th className="border border-gray-700 px-3 py-2 text-right">Income</th>
+                <th className="border border-gray-700 px-3 py-2 text-right">Expenses</th>
+                <th className="border border-gray-700 px-3 py-2 text-right">Net</th>
+                <th className="border border-gray-700 px-3 py-2 text-center">Details</th>
               </tr>
             </thead>
             <tbody>
@@ -110,20 +82,26 @@ export default function EntriesReport({scenarioId}) {
                 return (
                   <>
                     {/* Period summary with totals */}
-                    <tr className="border-t">
-                      <td className="border px-3 py-2">
+                    <tr className="bg-gray-800 hover:bg-gray-750 text-gray-200">
+                      <td className="border border-gray-700 px-3 py-2">
                         {p.period_start} → {p.period_end}
                       </td>
-                      <td className="border px-3 py-2">{p.opening_balance}</td>
-                      <td className="border px-3 py-2">{p.profit_loss}</td>
-                      <td className="border px-3 py-2">{p.closing_balance}</td>
-                      <td className="border px-3 py-2">{p["%_change"].toFixed(2)}%</td>
-                      <td className="border px-3 py-2">{totals.totalIncome}</td>
-                      <td className="border px-3 py-2">{totals.totalExpenses}</td>
-                      <td className="border px-3 py-2">{totals.net}</td>
-                      <td className="border px-3 py-2 text-center">
+                      <td className="border border-gray-700 px-3 py-2 text-right">{p.opening_balance.toFixed(2)}</td>
+                      <td className={`border border-gray-700 px-3 py-2 text-right ${p.profit_loss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        {p.profit_loss.toFixed(2)}
+                      </td>
+                      <td className="border border-gray-700 px-3 py-2 text-right">{p.closing_balance.toFixed(2)}</td>
+                      <td className={`border border-gray-700 px-3 py-2 text-right ${p["%_change"] >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        {p["%_change"].toFixed(2)}%
+                      </td>
+                      <td className="border border-gray-700 px-3 py-2 text-right text-green-400">{totals.totalIncome.toFixed(2)}</td>
+                      <td className="border border-gray-700 px-3 py-2 text-right text-red-400">{totals.totalExpenses.toFixed(2)}</td>
+                      <td className={`border border-gray-700 px-3 py-2 text-right ${totals.net >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        {totals.net.toFixed(2)}
+                      </td>
+                      <td className="border border-gray-700 px-3 py-2 text-center">
                         <button
-                          className="text-blue-600 hover:underline flex items-center justify-center"
+                          className="text-blue-400 hover:text-blue-300 flex items-center justify-center mx-auto"
                           onClick={() =>
                             setExpandedPeriod(expandedPeriod === idx ? null : idx)
                           }
@@ -140,16 +118,18 @@ export default function EntriesReport({scenarioId}) {
                     {/* Expanded entries */}
                     {expandedPeriod === idx &&
                       p.entries.map((e) => (
-                        <tr key={e.entry_id} className="bg-gray-50">
-                          <td className="border px-3 py-1"></td>
-                          <td className="border px-3 py-1">{e.entry_name}</td>
-                          <td className="border px-3 py-1">{e.entry_type}</td>
-                          <td className="border px-3 py-1">{e.entry_amount}</td>
-                          <td className="border px-3 py-1">{e.category_name}</td>
-                          <td className="border px-3 py-1">{e.entry_frequency}</td>
-                          <td className="border px-3 py-1">{e.entry_date}</td>
-                          <td className="border px-3 py-1"></td>
-                          <td className="border px-3 py-1"></td>
+                        <tr key={e.entry_id} className="bg-gray-850 text-gray-300 text-sm">
+                          <td className="border border-gray-700 px-3 py-1"></td>
+                          <td className="border border-gray-700 px-3 py-1">{e.entry_name}</td>
+                          <td className={`border border-gray-700 px-3 py-1 ${e.entry_type === 'income' ? 'text-green-400' : 'text-red-400'}`}>
+                            {e.entry_type}
+                          </td>
+                          <td className="border border-gray-700 px-3 py-1 text-right">{e.entry_amount.toFixed(2)}</td>
+                          <td className="border border-gray-700 px-3 py-1">{e.category_name}</td>
+                          <td className="border border-gray-700 px-3 py-1">{e.entry_frequency}</td>
+                          <td className="border border-gray-700 px-3 py-1">{e.entry_date}</td>
+                          <td className="border border-gray-700 px-3 py-1"></td>
+                          <td className="border border-gray-700 px-3 py-1"></td>
                         </tr>
                       ))}
                   </>

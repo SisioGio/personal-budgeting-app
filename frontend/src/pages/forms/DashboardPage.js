@@ -1,41 +1,51 @@
 import React from 'react';
-import { useEntries } from './../../queries/useEntries';
+import { useForecast } from './../../queries/useEntries';
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { useScenario } from '../../utils/ScenarioContext';
+import EntriesReport from './EntriesReport';
+
 export default function DashboardPage() {
   const { scenarioId } = useScenario();
 
-  const { data: entries = [] } = useEntries({ scenarioId });
+  const { data: forecastData = [], isLoading } = useForecast({
+    scenarioId,
+    timeFrame: 'monthly',
+    simulateYears: 2,
+  });
 
-  const aggregateByDate = () => {
-    let balance = 0;
-    const map = {};
-    entries.forEach((e) => {
-      console.log(e)
-      const date = e.entry_start_date;
-      if (!map[date]) map[date] = { date, income: 0, expense: 0 };
-      if (e.entry_type === 'income') map[date].income += e.entry_amount;
-      else map[date].expense += e.entry_amount;
+  const formatChartData = () => {
+    return forecastData.map((period) => {
+      const income = period.entries
+        .filter((e) => e.entry_type === 'income')
+        .reduce((sum, e) => sum + e.entry_amount, 0);
+
+      const expense = period.entries
+        .filter((e) => e.entry_type === 'expense')
+        .reduce((sum, e) => sum + e.entry_amount, 0);
+
+      return {
+        date: period.period_start,
+        income,
+        expense,
+        net_balance: period.closing_balance,
+        profit_loss: period.profit_loss,
+      };
     });
-
-    return Object.values(map)
-      .sort((a, b) => new Date(a.date) - new Date(b.date))
-      .map((d) => {
-        balance += d.income - d.expense;
-        return { ...d, net_balance: balance };
-      });
   };
+
+  if (isLoading) {
+    return <div className="text-white">Loading...</div>;
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
       {/* Cash Flow / Net Balance */}
 
       <div className="bg-gray-900 rounded-2xl shadow-lg p-6">
-        <h2 className="text-blue-400 font-bold mb-2">Cash Flow / Net Balance</h2>
+        <h2 className="text-blue-400 font-bold mb-2">Cash Flow / Net Balance (Monthly)</h2>
 
-        <h1>{scenarioId}</h1>
         <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={aggregateByDate()}>
+          <LineChart data={formatChartData()}>
             <CartesianGrid strokeDasharray="3 3" stroke="#444" />
             <XAxis dataKey="date" stroke="#aaa" />
             <YAxis stroke="#aaa" />
@@ -49,17 +59,20 @@ export default function DashboardPage() {
 
       {/* Profit / Loss */}
       <div className="bg-gray-900 rounded-2xl shadow-lg p-6">
-        <h2 className="text-pink-400 font-bold mb-2">Profit / Loss Over Time</h2>
+        <h2 className="text-pink-400 font-bold mb-2">Profit / Loss Over Time (Monthly)</h2>
         <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={aggregateByDate()}>
+          <LineChart data={formatChartData()}>
             <CartesianGrid strokeDasharray="3 3" stroke="#444" />
             <XAxis dataKey="date" stroke="#aaa" />
             <YAxis stroke="#aaa" />
             <Tooltip contentStyle={{ backgroundColor: '#111', border: 'none' }} />
-            <Line type="monotone" dataKey="net_balance" stroke="#facc15" strokeWidth={2} />
+            <Line type="monotone" dataKey="profit_loss" stroke="#facc15" strokeWidth={2} />
           </LineChart>
         </ResponsiveContainer>
       </div>
+
+
+      <EntriesReport/>
     </div>
   );
 }
