@@ -69,7 +69,7 @@ const { scenarioId } = useScenario();
                 <th className="border border-gray-700 px-3 py-2 text-right">Opening</th>
                 <th className="border border-gray-700 px-3 py-2 text-right">Profit/Loss</th>
                 <th className="border border-gray-700 px-3 py-2 text-right">Closing</th>
-                <th className="border border-gray-700 px-3 py-2 text-right">% Change</th>
+                {/* <th className="border border-gray-700 px-3 py-2 text-right">% Change</th> */}
                 <th className="border border-gray-700 px-3 py-2 text-right">Income</th>
                 <th className="border border-gray-700 px-3 py-2 text-right">Expenses</th>
                 <th className="border border-gray-700 px-3 py-2 text-right">Net</th>
@@ -91,9 +91,9 @@ const { scenarioId } = useScenario();
                         {p.profit_loss.toFixed(2)}
                       </td>
                       <td className="border border-gray-700 px-3 py-2 text-right">{p.closing_balance.toFixed(2)}</td>
-                      <td className={`border border-gray-700 px-3 py-2 text-right ${p["%_change"] >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      {/* <td className={`border border-gray-700 px-3 py-2 text-right ${p["%_change"] >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                         {p["%_change"].toFixed(2)}%
-                      </td>
+                      </td> */}
                       <td className="border border-gray-700 px-3 py-2 text-right text-green-400">{totals.totalIncome.toFixed(2)}</td>
                       <td className="border border-gray-700 px-3 py-2 text-right text-red-400">{totals.totalExpenses.toFixed(2)}</td>
                       <td className={`border border-gray-700 px-3 py-2 text-right ${totals.net >= 0 ? 'text-green-400' : 'text-red-400'}`}>

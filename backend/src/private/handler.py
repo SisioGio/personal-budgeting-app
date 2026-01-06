@@ -167,11 +167,12 @@ def generate_forecast(entries, start_date=None, periods=12, simulate_years=1, ti
         
         period_start = datetime(period_start.year, period_start.month, period_start.day)
         period_end = datetime(period_end.year, period_end.month, period_end.day, 23, 59, 59)
-
+        print(f"Checking for {period_start}:{period_end}")
 
         period_entries = []
 
         for e in entries:
+            print(f"Entry: {e['entry_name']}")
             freq = e["entry_frequency"]
             freq_delta = FREQUENCY_MAP.get(freq)
 
@@ -182,6 +183,9 @@ def generate_forecast(entries, start_date=None, periods=12, simulate_years=1, ti
             # repeat logic
             current = e_start
             while freq_delta and current <= period_end.date():
+                print(f"Checking for date {current} ({period_start.date()} - {period_end.date()})")
+                if current > e_end:
+                    break
                 if period_start.date() <= current <= period_end.date():
                     period_entries.append({**e, "entry_date": current})
                 current += freq_delta
@@ -219,7 +223,7 @@ def get_entries_report(event, context):
         params = event.get("queryStringParameters") or {}
         scenario_id = params.get("scenario_id")
         time_frame = params.get("time_frame", "monthly").lower()
-        simulate_years = int(params.get("simulate_years", 2))
+        simulate_years = int(params.get("simulate_years", 1))
 
         if not scenario_id:
             return generate_response(400, {"error": "scenario_id is required"})
@@ -234,7 +238,7 @@ def get_entries_report(event, context):
         if not entries:
             return generate_response(200, {"data": []})
 
-        forecast = generate_forecast(entries, periods=12, simulate_years=3, time_frame="monthly")
+        forecast = generate_forecast(entries, periods=12, simulate_years=1, time_frame="monthly")
 
         
         
