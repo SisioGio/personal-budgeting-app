@@ -27,5 +27,5 @@ email = 'testuser2083@example.com'
 #     for entry in item['entries']:
 #         print(f'{entry['entry_name']}: {entry['entry_amount']}')
 
-event = create_event("GET",'/private/signin',email=email,params={'scenario_id':28,'simulate_year':2,'time_frame':'monthly'})
+event = create_event("GET",'/private/report/actuals-vs-budget',email=email,params={'scenario_id':28})
 print(lambda_handler(event,None))

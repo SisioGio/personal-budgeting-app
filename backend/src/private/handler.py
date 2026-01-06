@@ -49,10 +49,12 @@ def lambda_handler(event, context):
     print(event)
     if http_method == 'GET' and path == '/private/signin':
         return signin(event,context)
-    if http_method == 'PUT' and path == '/private/balance':
+    elif http_method == 'PUT' and path == '/private/balance':
         return update_user(event,context)
     elif http_method == 'GET' and path == '/private/entries':
         return get_entries_report(event,context)
+    elif http_method == 'GET' and path == '/private/report/actuals-vs-budget':
+        return get_actuals_report(event,context)
     
     else:
         return generate_response(404, {"message": "Invalid route"})
@@ -110,7 +112,7 @@ def signin(event, context):
 
 @tracer.capture_lambda_handler
 @metrics.log_metrics
-def update_user(event):
+def update_user(event,context):
     user_id = event['requestContext']['authorizer']['principalId']
     body = json.loads(event.get('body', '{}'))
     initial_balance = body.get('initial_balance')
@@ -121,7 +123,7 @@ def update_user(event):
     query = """
         UPDATE users
         SET initial_balance = %s
-        WHERE user_id = %s 
+        WHERE id = %s 
         RETURNING *
     """
     result = execute_query(query, (initial_balance, user_id),commit=True)
@@ -259,14 +261,7 @@ def get_entries_report(event, context):
 
         if not entries:
             return generate_response(200, {"data": []})
-
         forecast = generate_forecast(entries, periods=12, simulate_years=1, time_frame="monthly")
-
-        
-        
-        
-
-       
         return generate_response(200, {"data": forecast})
 
     except Exception as e:
@@ -274,7 +269,79 @@ def get_entries_report(event, context):
         return generate_response(500, {"error": "Internal server error"})
     
     
-      
+
+@tracer.capture_lambda_handler
+@metrics.log_metrics
+def get_actuals_report(event, context):
+    logger.info("Generating actuals vs budget report")
+
+    user_id = event["requestContext"]["authorizer"]["principalId"]
+
+    scenario_id = (
+        event.get("queryStringParameters", {}) or {}
+    ).get("scenario_id")
+
+    if not scenario_id:
+        return {
+            "statusCode": 400,
+            "body": json.dumps({"msg": "scenario_id is required"})
+        }
+
+    query = """
+        SELECT
+            TO_CHAR(a.actual_date, 'YYYY-MM') AS period,
+            e.id                                AS entry_id,
+            e.name                              AS entry_name,
+            e.amount                            AS entry_budget,
+            SUM(
+                CASE
+                    WHEN a.type = 'expense' THEN -a.amount
+                    ELSE a.amount
+                END
+            )                                   AS actual_total
+        FROM actuals a
+        JOIN entries e ON e.id = a.entry_id
+        WHERE
+            e.user_id = %s
+            AND e.scenario_id = %s
+        GROUP BY
+            period,
+            e.id,
+            e.name,
+            e.amount
+        ORDER BY
+            period ASC,
+            e.name ASC
+    """
+    logger.info("SQL PARAMS: user_id=%s scenario_id=%s", user_id, scenario_id)
+    rows = execute_query(query, params=(user_id, scenario_id))
+
+    # ---- Transform for frontend friendliness ----
+    report = []
+
+    for r in rows:
+        budget = r["entry_budget"]
+        actual = r["actual_total"] or 0
+        delta = actual - budget
+
+        report.append({
+            "period": r["period"],
+            "entry_id": r["entry_id"],
+            "entry_name": r["entry_name"],
+            "budget": budget,
+            "actual": actual,
+            "delta": delta
+        })
+
+    metrics.add_metric(name="ActualsReportGenerated", unit=MetricUnit.Count, value=1)
+    return generate_response(200,{"data":report})
+  
+    
+    
+        
+        
+
+     
 def generate_response(statusCode,message):
     return {
         'statusCode': statusCode,

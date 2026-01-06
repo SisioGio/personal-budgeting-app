@@ -1,7 +1,7 @@
 import json
 from datetime import date, datetime
-from common.utils import generate_response
-from common.db import execute_query
+from utils import generate_response
+from db import execute_query
 from datetime import datetime
 
 ALLOWED_TYPES = {"income", "expense"}
@@ -11,7 +11,7 @@ def lambda_handler(event, context):
     method = event.get("httpMethod")
     path = event.get("path")
 
-    if path == "/actual":
+    if path == "/actuals":
         if method == "POST":
             return create(event)
         if method == "GET":
@@ -32,7 +32,7 @@ def create(event):
     body = json.loads(event.get("body", "{}"))
 
     required_fields = [
-        "actual_date", "amount", "category_id",'type',"entry_id"
+        "actual_date", "amount",'type',"entry_id"
     ]
 
     for field in required_fields:
@@ -41,8 +41,8 @@ def create(event):
 
     query = """
         INSERT INTO actuals
-        (user_id, actual_date, amount, category_id,type,comment,entry_id)
-        VALUES (%s, %s, %s, %s,%s,%s,%s)
+        (user_id, actual_date, amount,type,comment,entry_id)
+        VALUES (%s, %s, %s, %s,%s,%s)
         RETURNING *
     """
     act_type = body['type']
@@ -52,7 +52,6 @@ def create(event):
         user_id,
         body["actual_date"],
         body["amount"],
-        body["category_id"],
         act_type,
         body.get("comment"),
         body['entry_id']

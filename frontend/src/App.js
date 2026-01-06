@@ -11,6 +11,7 @@ import ProtectedRoute from './utils/ProtectedRoute'
 import CRMPage from './pages/forms/CRM';
 
 import DashboardPage from './pages/forms/DashboardPage';
+import ActualsManager from './pages/forms/ActualsManager';
 
 const App = () => {
 
@@ -41,6 +42,11 @@ const App = () => {
         <Route
           path="/dashboard"
           element={<ProtectedRoute children={<DashboardPage />} />}
+        />
+
+        <Route
+          path="/actuals"
+          element={<ProtectedRoute children={<ActualsManager />} />}
         />
 
         <Route path="*" element={<NotFound />} />

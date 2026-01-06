@@ -10,6 +10,7 @@ export default function Nav() {
   const tabs = [
     { path: "/dashboard", label: "Dashboard" },
     { path: "/settings", label: "Settings" },
+    { path: "/actuals", label: "Actuals" },
   ];
 
   return (
