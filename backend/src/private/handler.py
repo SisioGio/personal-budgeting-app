@@ -95,10 +95,11 @@ def signin(event, context):
         row = row[0]
         user_id=row['id']
         user_email = row['email']
-
+        initial_balance = row['initial_balance']
         user = {
             "id": user_id,
-            "email": user_email
+            "email": user_email,
+            "initial_balance":initial_balance
         }
 
         return generate_response(200, {"data": user})
