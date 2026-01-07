@@ -55,7 +55,9 @@ def lambda_handler(event, context):
         return get_entries_report(event,context)
     elif http_method == 'GET' and path == '/private/report/actuals-vs-budget':
         return get_actuals_report(event,context)
-    
+    elif http_method == 'GET' and path == '/private/report/actuals-history':
+        return get_actuals_history_report(event,context)
+
     else:
         return generate_response(404, {"message": "Invalid route"})
 
@@ -338,13 +340,179 @@ def get_actuals_report(event, context):
 
     rows = execute_query(query, params)
     return generate_response(200,{"data":rows})
-  
-    
-    
-        
-        
 
-     
+
+@tracer.capture_lambda_handler
+@metrics.log_metrics
+def get_actuals_history_report(event, context):
+    """
+    Returns historical actuals vs budget report with:
+    - Period-level summaries (grouped by month)
+    - Entry-level drill-down for each period
+    - Shows ALL budget entries for each period (even without actuals)
+    - Supports date range filtering
+    """
+    logger.info("Generating historical actuals vs budget report")
+
+    user_id = event["requestContext"]["authorizer"]["principalId"]
+    qs = event.get("queryStringParameters") or {}
+
+    scenario_id = qs.get("scenario_id")
+    start_period = qs.get("start_period")  # YYYY-MM format
+    end_period = qs.get("end_period")      # YYYY-MM format
+    periods_count = int(qs.get("periods", 12))  # Number of periods to show
+
+    if not scenario_id:
+        return generate_response(400, {
+            "msg": "scenario_id is required"
+        })
+
+    # Default to last N months if no date range specified
+    if not start_period or not end_period:
+        today = datetime.now()
+        end_date = today.replace(day=1)
+        start_date = end_date - relativedelta(months=periods_count - 1)
+        start_period = start_date.strftime("%Y-%m")
+        end_period = end_date.strftime("%Y-%m")
+
+    # Generate list of all periods in the range
+    start_dt = datetime.strptime(f"{start_period}-01", "%Y-%m-%d")
+    end_dt = datetime.strptime(f"{end_period}-01", "%Y-%m-%d")
+
+    periods = []
+    current_dt = start_dt
+    while current_dt <= end_dt:
+        periods.append(current_dt.strftime("%Y-%m"))
+        current_dt = current_dt + relativedelta(months=1)
+
+    # Reverse to show most recent first
+    periods.reverse()
+
+    result = []
+
+    for period in periods:
+        # Extract year and month for queries
+        period_year = int(period.split('-')[0])
+        period_month = int(period.split('-')[1])
+
+        # Step 1: Get period-level summary - FROM ENTRIES PERSPECTIVE
+        period_summary_query = """
+            SELECT
+                %s AS period,
+                SUM(e.amount) AS total_budget,
+                COALESCE(SUM(a.amount), 0) AS total_actual,
+                (SUM(e.amount) - COALESCE(SUM(a.amount), 0)) AS total_delta,
+                COUNT(DISTINCT e.id) AS total_entries,
+                COUNT(DISTINCT CASE WHEN a.id IS NOT NULL THEN e.id END) AS entries_with_actuals
+            FROM entries e
+            LEFT JOIN actuals a
+                ON a.entry_id = e.id
+                AND TO_CHAR(a.actual_date, 'YYYY-MM') = %s
+            WHERE e.user_id = %s
+              AND e.scenario_id = %s
+              AND (
+                  e.frequency = 'monthly'
+                  OR (e.frequency = 'yearly' AND EXTRACT(MONTH FROM e.start_date) = %s)
+                  OR (e.frequency = 'one_time' AND TO_CHAR(e.start_date, 'YYYY-MM') = %s)
+              )
+              AND e.start_date <= TO_DATE(%s || '-01', 'YYYY-MM-DD')
+              AND (e.end_date IS NULL OR e.end_date >= TO_DATE(%s || '-01', 'YYYY-MM-DD'))
+        """
+
+        period_summary = execute_query(
+            period_summary_query,
+            (period, period, user_id, scenario_id, period_month, period, period, period)
+        )
+
+        if not period_summary or len(period_summary) == 0:
+            continue
+
+        summary = period_summary[0]
+
+        # Skip periods with no entries
+        if not summary['total_entries'] or summary['total_entries'] == 0:
+            continue
+
+        # Step 2: Get entry-level drill-down for this period - ALL ENTRIES
+        entries_query = """
+            SELECT
+                %s AS period,
+                e.id AS entry_id,
+                e.name AS entry_name,
+                e.type AS entry_type,
+                e.amount AS budget,
+                c.name AS category_name,
+                e.frequency AS entry_frequency,
+                COALESCE(SUM(a.amount), 0) AS actual,
+                (e.amount - COALESCE(SUM(a.amount), 0)) AS delta,
+                CASE
+                    WHEN e.amount > 0 THEN
+                        ROUND((COALESCE(SUM(a.amount), 0) / e.amount) * 100, 2)
+                    ELSE 0
+                END AS percentage,
+                COUNT(a.id) AS actual_count
+            FROM entries e
+            JOIN category c ON e.category_id = c.id
+            LEFT JOIN actuals a
+                ON a.entry_id = e.id
+                AND TO_CHAR(a.actual_date, 'YYYY-MM') = %s
+            WHERE e.user_id = %s
+              AND e.scenario_id = %s
+              AND (
+                  e.frequency = 'monthly'
+                  OR (e.frequency = 'yearly' AND EXTRACT(MONTH FROM e.start_date) = %s)
+                  OR (e.frequency = 'one_time' AND TO_CHAR(e.start_date, 'YYYY-MM') = %s)
+              )
+              AND e.start_date <= TO_DATE(%s || '-01', 'YYYY-MM-DD')
+              AND (e.end_date IS NULL OR e.end_date >= TO_DATE(%s || '-01', 'YYYY-MM-DD'))
+            GROUP BY e.id, e.name, e.type, e.amount, c.name, e.frequency
+            ORDER BY e.type DESC, e.name ASC
+        """
+
+        entries = execute_query(
+            entries_query,
+            (period, period, user_id, scenario_id, period_month, period, period, period)
+        )
+
+        # Calculate period-level percentage
+        total_budget = float(summary['total_budget']) if summary['total_budget'] else 0
+        total_actual = float(summary['total_actual']) if summary['total_actual'] else 0
+        period_percentage = round((total_actual / total_budget * 100), 2) if total_budget > 0 else 0
+
+        # Separate income and expenses for better organization
+        income_entries = [e for e in entries if e['entry_type'] == 'income']
+        expense_entries = [e for e in entries if e['entry_type'] == 'expense']
+
+        # Calculate income and expense totals
+        income_budget = sum(float(e['budget']) for e in income_entries)
+        income_actual = sum(float(e['actual']) for e in income_entries)
+        expense_budget = sum(float(e['budget']) for e in expense_entries)
+        expense_actual = sum(float(e['actual']) for e in expense_entries)
+
+        result.append({
+            "period": period,
+            "period_start": f"{period}-01",
+            "period_end": (datetime.strptime(f"{period}-01", "%Y-%m-%d") + relativedelta(months=1) - timedelta(days=1)).strftime("%Y-%m-%d"),
+            "summary": {
+                "total_budget": total_budget,
+                "total_actual": total_actual,
+                "total_delta": float(summary['total_delta']) if summary['total_delta'] else 0,
+                "percentage": period_percentage,
+                "total_entries": int(summary['total_entries']) if summary['total_entries'] else 0,
+                "entries_with_actuals": int(summary['entries_with_actuals']) if summary['entries_with_actuals'] else 0,
+                "income_budget": income_budget,
+                "income_actual": income_actual,
+                "expense_budget": expense_budget,
+                "expense_actual": expense_actual
+            },
+            "income": income_entries,
+            "expenses": expense_entries,
+            "entries": entries  # All entries combined
+        })
+
+    return generate_response(200, {"data": result})
+
+
 def generate_response(statusCode,message):
     return {
         'statusCode': statusCode,

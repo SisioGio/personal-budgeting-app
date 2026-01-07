@@ -12,6 +12,7 @@ import CRMPage from './pages/forms/CRM';
 
 import DashboardPage from './pages/forms/DashboardPage';
 import ActualsManager from './pages/forms/ActualsManager';
+import ActualsHistory from './pages/forms/ActualsHistory';
 
 const App = () => {
 
@@ -47,6 +48,11 @@ const App = () => {
         <Route
           path="/actuals"
           element={<ProtectedRoute children={<ActualsManager />} />}
+        />
+
+        <Route
+          path="/actuals-history"
+          element={<ProtectedRoute children={<ActualsHistory />} />}
         />
 
         <Route path="*" element={<NotFound />} />

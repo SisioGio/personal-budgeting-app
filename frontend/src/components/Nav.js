@@ -11,6 +11,7 @@ export default function Nav() {
     { path: "/dashboard", label: "Dashboard" },
     { path: "/settings", label: "Settings" },
     { path: "/actuals", label: "Actuals" },
+    { path: "/actuals-history", label: "History" },
   ];
 
   return (

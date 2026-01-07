@@ -26,8 +26,8 @@ export const useActVsBud = (scenarioId,period) =>
     },
   });
 
-  export const useForecast = ({
-      scenarioId,
+export const useForecast = ({
+  scenarioId,
   timeFrame,
   periods,
   simulateYears,
@@ -51,4 +51,33 @@ export const useActVsBud = (scenarioId,period) =>
 
       const res = await apiClient.get('/private/entries', { params });
       return res.data.data;
-    }})
+    }
+  });
+
+export const useActualsHistory = ({
+  scenarioId,
+  startPeriod,
+  endPeriod,
+  periods = 12,
+}) =>
+  useQuery({
+    queryKey: [
+      'actuals-history',
+      scenarioId,
+      startPeriod,
+      endPeriod,
+      periods,
+    ],
+    enabled: !!scenarioId,
+    queryFn: async () => {
+      const params = {
+        scenario_id: scenarioId,
+        ...(startPeriod && { start_period: startPeriod }),
+        ...(endPeriod && { end_period: endPeriod }),
+        periods,
+      };
+
+      const res = await apiClient.get('/private/report/actuals-history', { params });
+      return res.data.data;
+    }
+  });
