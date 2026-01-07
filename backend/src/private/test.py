@@ -16,16 +16,19 @@ def create_event(method,path,body=None,email=None,params={}):
 
 
 email = 'testuser2083@example.com'
-event = create_event("GET",'/private/entries',email=email,params={'scenario_id':28,'simulate_year':1,'time_frame':'monthly'})
-res = lambda_handler(event,None)
+# event = create_event("GET",'/private/entries',email=email,params={'scenario_id':28,'simulate_year':1,'time_frame':'monthly'})
+# res = lambda_handler(event,None)
 
-body = json.loads(res['body'])['data']
+# body = json.loads(res['body'])['data']
 
-for item in body:
-    print(item)
+# for item in body:
+#     print(item)
     
 #     for entry in item['entries']:
 #         print(f'{entry['entry_name']}: {entry['entry_amount']}')
 
 # event = create_event("GET",'/private/report/actuals-vs-budget',email=email,params={'scenario_id':28,'period':'2026-01'})
 # print(lambda_handler(event,None))
+
+event = create_event("GET",'/private/report/actuals-history',email=email,params={'scenario_id':28})
+print(lambda_handler(event,None))

@@ -11,8 +11,8 @@ export default function CRMPage() {
 
   const tabs = [
     { id: 'scenarios', label: 'Scenarios', icon: '🎯', color: 'blue' },
-    { id: 'entries', label: 'Budget Entries', icon: '💰', color: 'green' },
     { id: 'categories', label: 'Categories', icon: '🏷️', color: 'pink' },
+     { id: 'entries', label: 'Budget Entries', icon: '💰', color: 'green' },
     { id: 'balance', label: 'Initial Balance', icon: '💵', color: 'purple' },
   ];
 

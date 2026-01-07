@@ -1,19 +1,19 @@
-import { React, useState, useEffect } from "react";
-import apiClient from "../../utils/apiClient";
+import {  useState } from "react";
+
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+
 import { useForecast } from '../../queries/useEntries';
-import { useScenarios } from '../../queries/useScenarios';
+
 import { useScenario } from '../../utils/ScenarioContext';
 
 
 export default function EntriesReport() {
   const { scenarioId } = useScenario();
-  const queryClient = useQueryClient();
 
-  const [timeFrame, setTimeFrame] = useState("monthly");
-  const [periods, setPeriods] = useState(12);
-  const [simulateYears, setSimulateYears] = useState(1);
+
+  const [timeFrame] = useState("monthly");
+  const [periods] = useState(12);
+  const [simulateYears] = useState(1);
   const [expandedPeriod, setExpandedPeriod] = useState(null);
 
   const {
@@ -26,7 +26,6 @@ export default function EntriesReport() {
     simulateYears,
   });
 
-  const { data: scenarios = [], isLoading } = useScenarios();
 
 
 
@@ -56,7 +55,7 @@ export default function EntriesReport() {
       </div>
 
       {/* Report Content */}
-      {isLoading ? (
+      {isFetching ? (
         <div className="text-center py-8 text-gray-400">
           <div className="text-4xl mb-2 animate-pulse">📊</div>
           <p>Loading forecast...</p>

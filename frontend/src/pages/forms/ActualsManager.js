@@ -20,7 +20,7 @@ export default function ActualsManager() {
 
 
   /* ------------------ DATA ------------------ */
-  const { data: entries = [], isLoading } = useEntries(scenarioId);
+  const { data: entries = [] } = useEntries(scenarioId);
 
   const { data: actuals = [] } = useQuery({
     queryKey: ['actuals',period],
@@ -65,7 +65,7 @@ export default function ActualsManager() {
   });
 
   /* ------------------ HELPERS ------------------ */
-  const selectedEntry = entries.find(e => e.entry_id === form.entry_id);
+  // const selectedEntry = entries.find(e => e.entry_id === form.entry_id);
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });

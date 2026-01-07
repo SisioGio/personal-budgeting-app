@@ -2,7 +2,7 @@ import { useState } from 'react';
 import apiClient from '../../utils/apiClient';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEntries } from '../../queries/useEntries';
-import { useScenarios } from '../../queries/useScenarios';
+
 import { useCategories } from '../../queries/useCategories';
 
 export default function EntriesCRUD({ scenarioId }) {
@@ -20,7 +20,7 @@ export default function EntriesCRUD({ scenarioId }) {
   const [search, setSearch] = useState('');
 
   const { data: categories = [] } = useCategories();
-  const { data: entries = [], isLoading } = useEntries(scenarioId);
+  const { data: entries = [] } = useEntries(scenarioId);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

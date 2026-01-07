@@ -20,4 +20,4 @@ def create_event(method,path,body=None,email=None,params={}):
 if __name__ == "__main__":
     
     event = create_event('GET','/actuals',email='testuser2083@example.com')
-    print(event)
+    print(lambda_handler(event,None))
