@@ -299,6 +299,9 @@ def get_actuals_report(event, context):
             })
         }
 
+    period_start = period+"-01"
+    period_end = end_of_month(datetime.strptime(period_start,"%Y-%m-%d"))
+    
     query = """
         SELECT
             %s                              AS period,
@@ -328,6 +331,8 @@ def get_actuals_report(event, context):
         WHERE
             e.user_id = %s
             AND e.scenario_id = %s
+            AND e.start_date <= %s
+            AND e.end_date >= %s
         GROUP BY
             e.id,
             e.name,
@@ -336,7 +341,7 @@ def get_actuals_report(event, context):
             e.name ASC
     """
 
-    params = (period, period, user_id, scenario_id)
+    params = (period, period, user_id, scenario_id,period_end,period_start)
 
     logger.info("SQL PARAMS: %s", params)
 
