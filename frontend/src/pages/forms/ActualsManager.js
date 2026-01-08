@@ -10,73 +10,73 @@ import { format, subMonths } from "date-fns";
 
 export default function ActualsManager() {
     const { scenarioId } = useScenario();
-  const queryClient = useQueryClient();
+    const queryClient = useQueryClient();
     const [period, setPeriod] = useState(format(new Date(), "yyyy-MM"));
     const amountInputRef = useRef(null);
 
-   const lastNextMonths = Array.from({ length: 13 }, (_, i) => {
-    return format(subMonths(new Date(), 6 - i), "yyyy-MM");
-  });
+    const lastNextMonths = Array.from({ length: 13 }, (_, i) => {
+      return format(subMonths(new Date(), 6 - i), "yyyy-MM");
+    });
 
-  const currentMonth = format(new Date(), "yyyy-MM");
+    const currentMonth = format(new Date(), "yyyy-MM");
 
 
-  /* ------------------ DATA ------------------ */
-  const { data: entries = [] } = useEntries(scenarioId);
+    /* ------------------ DATA ------------------ */
+    const { data: entries = [] } = useEntries(scenarioId);
 
-  // Fetch actuals for selected period
-  const { data: actuals = [] } = useQuery({
-    queryKey: ['actuals',period],
-    queryFn: async () => {
-      const res = await apiClient.get(`/actuals?period=${period}`,);
-      return res.data.data;
-    },
-    enabled: !!period,
-  });
+    // Fetch actuals for selected period
+    const { data: actuals = [] } = useQuery({
+      queryKey: ['actuals',period],
+      queryFn: async () => {
+        const res = await apiClient.get(`/actuals?period=${period}`,);
+        return res.data.data;
+      },
+      enabled: !!period,
+    });
 
-  // Fetch recent actuals (last 20)
-  const { data: recentActuals = [] } = useQuery({
-    queryKey: ['actuals', 'recent'],
-    queryFn: async () => {
-      const res = await apiClient.get(`/actuals`);
-      return res.data.data.slice(0, 20);
-    },
-  });
+    // Fetch recent actuals (last 20)
+    const { data: recentActuals = [] } = useQuery({
+      queryKey: ['actuals', 'recent'],
+      queryFn: async () => {
+        const res = await apiClient.get(`/actuals`);
+        return res.data.data.slice(0, 20);
+      },
+    });
 
-  // Fetch current month actuals for summary
-  const { data: currentMonthActuals = [] } = useQuery({
-    queryKey: ['actuals', currentMonth],
-    queryFn: async () => {
-      const res = await apiClient.get(`/actuals?period=${currentMonth}`);
-      return res.data.data;
-    },
-  });
+    // Fetch current month actuals for summary
+    const { data: currentMonthActuals = [] } = useQuery({
+      queryKey: ['actuals', currentMonth],
+      queryFn: async () => {
+        const res = await apiClient.get(`/actuals?period=${currentMonth}`);
+        return res.data.data;
+      },
+    });
 
-  /* ------------------ STATE ------------------ */
-  const [form, setForm] = useState({
-    entry_id: '',
-    amount: '',
-    actual_date: format(new Date(), "yyyy-MM-dd"), // Auto-fill today's date
-    comment: '',
-    type:''
-  });
+    /* ------------------ STATE ------------------ */
+    const [form, setForm] = useState({
+      entry_id: '',
+      amount: '',
+      actual_date: format(new Date(), "yyyy-MM-dd"), // Auto-fill today's date
+      comment: '',
+      type:''
+    });
 
-  const [editingId, setEditingId] = useState(null);
-  const [lastEntry, setLastEntry] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [editingId, setEditingId] = useState(null);
+    const [lastEntry, setLastEntry] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  /* ------------------ MUTATIONS ------------------ */
-  const createActual = useMutation({
-    mutationFn: (payload) => apiClient.post('/actuals', payload),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries(['actuals']);
-      setLastEntry(variables);
-      resetForm();
-      // Focus on amount input for fast consecutive entries
-      setTimeout(() => amountInputRef.current?.focus(), 100);
-    },
-  });
+    /* ------------------ MUTATIONS ------------------ */
+    const createActual = useMutation({
+      mutationFn: (payload) => apiClient.post('/actuals', payload),
+      onSuccess: (_, variables) => {
+        queryClient.invalidateQueries(['actuals']);
+        setLastEntry(variables);
+        resetForm();
+        // Focus on amount input for fast consecutive entries
+        setTimeout(() => amountInputRef.current?.focus(), 100);
+      },
+    });
 
   const updateActual = useMutation({
     mutationFn: (payload) => apiClient.put('/actuals', payload),

@@ -305,6 +305,7 @@ def get_actuals_report(event, context):
     query = """
         SELECT
             %s                              AS period,
+            e.type                          AS type,
             e.id                            AS entry_id,
             e.name                          AS entry_name,
             e.amount                        AS budget,
@@ -336,7 +337,8 @@ def get_actuals_report(event, context):
         GROUP BY
             e.id,
             e.name,
-            e.amount
+            e.amount,
+            e.type
         ORDER BY
             e.name ASC
     """
