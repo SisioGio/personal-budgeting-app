@@ -30,5 +30,8 @@ email = 'testuser2083@example.com'
 # event = create_event("GET",'/private/report/actuals-vs-budget',email=email,params={'scenario_id':28,'period':'2026-01'})
 # print(lambda_handler(event,None))
 
-event = create_event("GET",'/private/report/actuals-history',email=email,params={'scenario_id':28})
+# event = create_event("GET",'/private/report/actuals-history',email=email,params={'scenario_id':28})
+# print(lambda_handler(event,None))
+
+event = create_event("GET",'/private/balance',email=email)
 print(lambda_handler(event,None))

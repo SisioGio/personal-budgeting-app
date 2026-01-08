@@ -57,6 +57,8 @@ def lambda_handler(event, context):
         return get_actuals_report(event,context)
     elif http_method == 'GET' and path == '/private/report/actuals-history':
         return get_actuals_history_report(event,context)
+    elif http_method =='GET' and path =='/private/balance':
+        return get_user_balance(event,context)
 
     else:
         return generate_response(404, {"message": "Invalid route"})
@@ -340,6 +342,39 @@ def get_actuals_report(event, context):
 
     rows = execute_query(query, params)
     return generate_response(200,{"data":rows})
+
+
+@tracer.capture_lambda_handler
+@metrics.log_metrics
+def get_user_balance(event, context):
+    """
+    Returns user balance
+    
+    """
+    logger.info("Generating historical actuals vs budget report")
+
+    user_id = event["requestContext"]["authorizer"]["principalId"]
+    query = """
+            SELECT 
+            (COALESCE(u.initial_balance, 0) + COALESCE(actuals_sum, 0)) AS net_balance
+        FROM users u
+        LEFT JOIN (
+            SELECT 
+                user_id,
+                SUM(CASE WHEN type = 'expense' THEN -amount ELSE amount END) AS actuals_sum
+            FROM actuals
+            GROUP BY user_id
+        ) a ON a.user_id = u.id
+        WHERE u.id = %s;
+        """
+
+    rows = execute_query(query,(user_id,))
+    
+    current_balance = rows[0]['net_balance'] if len(rows)>0 else 0
+    return generate_response(200,{"current_balance":current_balance})
+    
+    
+
 
 def end_of_month(d):
     last_day = calendar.monthrange(d.year, d.month)[1]

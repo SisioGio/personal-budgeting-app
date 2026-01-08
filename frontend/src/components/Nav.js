@@ -1,4 +1,4 @@
-import React from "react";
+import { useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { useScenarios } from "../queries/useScenarios";
 import { useScenario } from "../utils/ScenarioContext";
@@ -7,11 +7,24 @@ export default function Nav() {
   const { scenarioId, setScenarioId } = useScenario();
   const { data: scenarios = [], isLoading } = useScenarios();
 
+  // Auto-select first scenario if none selected and scenarios are available
+  useEffect(() => {
+    if (!scenarioId && scenarios.length > 0 && !isLoading) {
+      // Check if the saved scenario still exists in the list
+      const savedExists = scenarios.some(s => s.id === scenarioId);
+
+      // If no scenario selected or saved scenario no longer exists, select the first one
+      if (!savedExists) {
+        setScenarioId(scenarios[0].id);
+      }
+    }
+  }, [scenarios, scenarioId, setScenarioId, isLoading]);
+
   const tabs = [
     { path: "/dashboard", label: "Dashboard" },
+       { path: "/actuals", label: "Actuals" },
     { path: "/settings", label: "Settings" },
-    { path: "/actuals", label: "Actuals" },
-    { path: "/actuals-history", label: "History" },
+ 
   ];
 
   return (
