@@ -10,3 +10,4 @@ alembic
 sqlalchemy
 psycopg2-binary
 pandas
+google-auth

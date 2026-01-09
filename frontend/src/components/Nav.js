@@ -1,11 +1,14 @@
 import { useEffect } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useScenarios } from "../queries/useScenarios";
 import { useScenario } from "../utils/ScenarioContext";
+import { useAuth } from "../utils/AuthContext";
 
 export default function Nav() {
   const { scenarioId, setScenarioId } = useScenario();
   const { data: scenarios = [], isLoading } = useScenarios();
+  const { auth, logout } = useAuth();
+  const navigate = useNavigate();
 
   // Auto-select first scenario if none selected and scenarios are available
   useEffect(() => {
@@ -20,11 +23,16 @@ export default function Nav() {
     }
   }, [scenarios, scenarioId, setScenarioId, isLoading]);
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   const tabs = [
     { path: "/dashboard", label: "Dashboard" },
        { path: "/actuals", label: "Actuals" },
     { path: "/settings", label: "Settings" },
- 
+
   ];
 
   return (
@@ -40,6 +48,8 @@ export default function Nav() {
               Finbotix
             </span>
           </div>
+
+         
 
           {/* SCENARIO SELECTOR - Visible on mobile in top row */}
           <div className={`flex sm:hidden items-center gap-1.5 px-3 py-1.5 rounded-lg backdrop-blur border transition-all text-xs ${
@@ -78,7 +88,7 @@ export default function Nav() {
         </div>
 
         {/* CENTER NAV TABS */}
-        <div className="flex gap-1 sm:gap-2 bg-white/5 p-1 rounded-xl backdrop-blur w-full sm:w-auto overflow-x-auto">
+        {auth && (<div className="flex gap-1 sm:gap-2 bg-white/5 p-1 rounded-xl backdrop-blur w-full sm:w-auto overflow-x-auto">
           {tabs.map((tab) => (
             <NavLink
               key={tab.path}
@@ -97,10 +107,10 @@ export default function Nav() {
               {tab.label}
             </NavLink>
           ))}
-        </div>
+        </div>)}
 
         {/* SCENARIO SELECTOR - Desktop only */}
-        <div className={`hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl backdrop-blur border transition-all ${
+        {auth && (<div className={`hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl backdrop-blur border transition-all ${
           !scenarioId && scenarios.length > 0
             ? 'bg-yellow-600/20 border-yellow-500/50 animate-pulse'
             : 'bg-white/5 border-white/10'
@@ -136,6 +146,33 @@ export default function Nav() {
               {!scenarioId && scenarios.length > 0 && (
                 <span className="text-yellow-400 text-xs">⚠️</span>
               )}
+            </>
+          )}
+        </div>)}
+
+        {/* AUTH BUTTONS */}
+        <div className="flex items-center gap-2">
+          {auth ? (
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-all"
+            >
+              Logout
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={() => navigate('/login')}
+                className="px-4 py-2 text-sm font-semibold text-white bg-white/10 hover:bg-white/20 rounded-lg transition-all border border-white/20"
+              >
+                Login
+              </button>
+              <button
+                onClick={() => navigate('/register')}
+                className="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-fuchsia-500 hover:from-indigo-600 hover:to-fuchsia-600 rounded-lg transition-all shadow-md"
+              >
+                Register
+              </button>
             </>
           )}
         </div>

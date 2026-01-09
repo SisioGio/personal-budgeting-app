@@ -3,6 +3,7 @@ import { useAuth } from '../../utils/AuthContext';
 import apiClient from '../../utils/apiClient';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
+import GoogleLoginButton from './GoogleLogin';
 
 const Login = () => {
   const { loginWithToken } = useAuth();
@@ -32,6 +33,9 @@ const Login = () => {
        setError(err?.response?.data?.message || "An unexpected error occurred.");
     }
   };
+
+
+
 
   return (
     <div className="min-h-screen flex justify-center items-center  px-2">
@@ -63,14 +67,16 @@ const Login = () => {
             required
           />
         </div>
-        <div>
+        <div className='flex flex-col gap-2'>
           <button
             type="submit"
             className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-cyan-700 transition duration-200"
           >
             Login
           </button>
-        </div>
+
+           <GoogleLoginButton/>    
+           </div>
       </form>
   
       <div className="text-sm text-white text-center">

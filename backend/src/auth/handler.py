@@ -1,6 +1,7 @@
 import json
 from src.register import register_user
 from src.login import login_user
+from src.loging_google import login_google
 from utils import generate_response
 # from src.verify_account import verify_account
 # from src.send_confirmation_email import send_confirmation_email
@@ -18,6 +19,8 @@ def lambda_handler(event, context):
         return register_user(event)
     if method == 'POST' and path == '/auth/login':
         return login_user(event)
+    if method == 'POST' and path == '/auth/google':
+        return login_google(event)
     
     # if method == 'POST' and path == '/auth/confirm':
     #     return verify_account(event)
