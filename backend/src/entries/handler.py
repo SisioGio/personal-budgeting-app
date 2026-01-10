@@ -52,13 +52,19 @@ def create_entry(event):
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s,%s)
         RETURNING *
     """
+    
+    end_date = body.get("end_date")
+    if end_date == "":
+        end_date = None
+    
+    
     params = (
         user_id,
         body["name"],
         body["type"],
         body["frequency"],
         body["start_date"],
-        body.get("end_date"),
+        end_date,
         body["amount"],
         body["scenario_id"],
         body['category_id']

@@ -4,13 +4,39 @@ import apiClient from '../../utils/apiClient';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
-const GoogleLoginButton = () => {
+const GoogleLoginButton = ({setError}) => {
+  const {loginWithToken} = useAuth()
+   const navigate = useNavigate();
 
-  const responseMessage = (response) => {
-        console.log(response);
-    };
+   
+  const responseMessage = async (googleResponse) => {
+  try {
+    console.log(googleResponse);
+    const token = googleResponse.credential;
+
+    // Await the API call
+    const res = await apiClient.post("/auth/google", { google_token: token });
+
+    const access_token = res.data.access_token;
+    const refresh_token = res.data.refresh_token;
+
+    localStorage.setItem("access_token", access_token);
+    localStorage.setItem("refresh_token", refresh_token);
+
+    loginWithToken(access_token);
+    navigate("/");
+
+  } catch (err) {
+    console.log(err);
+    setError(err?.response?.data?.message || "An unexpected error occurred.");
+  }
+};
+
+
+
     const errorMessage = (error) => {
-        console.error(error)
+       console.log(error)
+       setError( "An unexpected error occurred.");
       
     };
 

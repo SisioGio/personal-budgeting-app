@@ -22,7 +22,7 @@ export default function Layout({ children }) {
 
       {/* Footer */}
       <footer className="bg-gray-800 text-center py-3 text-gray-200">
-        &copy; 2026 <span className="font-semibold">Finbotix</span>. All rights reserved.
+        &copy; 2026 <span className="font-semibold">Finalyze</span>. All rights reserved.
       </footer>
     </div>
   );

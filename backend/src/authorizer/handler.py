@@ -48,3 +48,8 @@ def generate_policy(principal_id, effect, resource,context=None):
         policy['context'] = sanitized_context
 
     return policy
+
+
+
+
+# authorizer({'methodArn':'testing','authorizationToken':"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6eyJpZCI6MTAwfSwiZW1haWwiOiJhbGVzc2lvZ2lvdmFubmluaTIzQGdtYWlsLmNvbSJ9.03oNniuoCHBLGJEjabIoz1NG004yr6qPYUWmb80kiBs"},None)

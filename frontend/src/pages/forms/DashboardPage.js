@@ -27,6 +27,20 @@ export default function DashboardPage() {
   const currentPeriod = format(new Date(), 'yyyy-MM');
   const queryClient = useQueryClient();
   const amountInputRef = useRef(null);
+  const [forecastLength,setForecastLength]  =useState(6)
+
+  const [timeFrame,setTimeFrame] = useState("monthly")
+
+  // Slider limits per time frame
+  const maxLengthMap = {
+    daily: 90,       // up to 30 days
+    weekly: 52,      // up to 52 weeks
+    monthly: 24,     // up to 60 months
+    yearly: 2,      // up to 10 years
+  }
+
+  const maxLength = maxLengthMap[timeFrame] || 12
+
 
   // Load widget preferences from localStorage
   const [widgets, setWidgets] = useState(() => {
@@ -47,8 +61,8 @@ export default function DashboardPage() {
 
   const { data: forecastData = [], isLoading } = useForecast({
     scenarioId,
-    timeFrame: 'monthly',
-    simulateYears: 2,
+    timeFrame: timeFrame,
+    forecast_length: forecastLength
   });
 
   const { data: actualVsBudget = [] } = useActVsBud(scenarioId, currentPeriod);
@@ -340,18 +354,12 @@ export default function DashboardPage() {
 
   const formatChartData = () => {
     return forecastData.map((period) => {
-      const income = period.entries
-        .filter((e) => e.entry_type === 'income')
-        .reduce((sum, e) => sum + e.entry_amount, 0);
-
-      const expense = period.entries
-        .filter((e) => e.entry_type === 'expense')
-        .reduce((sum, e) => sum + e.entry_amount, 0);
+   
 
       return {
         date: period.period_start,
-        income,
-        expense,
+        income:period.income,
+        expense:period.expense,
         net_balance: period.closing_balance,
         profit_loss: period.profit_loss,
       };
@@ -408,63 +416,9 @@ export default function DashboardPage() {
         </ResponsiveContainer>
       ),
     },
-    // actualsVsBudget: {
-    //   title: `Actuals vs Budget - ${format(new Date(), 'MMMM yyyy')}`,
-    //   icon: '📊',
-    //   color: 'purple',
-    //   component: (
-    //     <>
-    //       {isLoadingActuals && (
-    //         <div className="text-center py-6">
-    //           <span className="text-xs text-gray-400 animate-pulse">Loading...</span>
-    //         </div>
-    //       )}
-    //       {!isLoadingActuals && actualVsBudget.length === 0 ? (
-    //         <div className="text-center py-6 text-gray-400 text-sm">
-    //           <div className="text-3xl mb-2">📊</div>
-    //           No actuals recorded for this month yet
-    //         </div>
-    //       ) : (
-    //         <ResponsiveContainer width="100%" height={actualVsBudget.length * 60 + 40}>
-    //           <BarChart
-    //             data={actualVsBudget}
-    //             layout="vertical"
-    //             margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-    //           >
-    //             <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-    //             <XAxis type="number" stroke="#aaa" />
-    //             <YAxis
-    //               type="category"
-    //               dataKey="entry_name"
-    //               stroke="#aaa"
-    //               width={120}
-    //               style={{ fontSize: '12px' }}
-    //             />
-    //             <Tooltip
-    //               contentStyle={{ backgroundColor: '#111', border: 'none' }}
-    //               formatter={(value, name) => [value, name === 'budget' ? 'Budget' : 'Actual']}
-    //             />
-    //             <Bar dataKey="budget" fill="#6b7280" opacity={0.4} radius={[0, 4, 4, 0]} />
-    //             <Bar dataKey="actual" radius={[0, 4, 4, 0]}>
-    //               {actualVsBudget.map((item, index) => {
-    //                 const pct = item.budget ? (item.actual / item.budget) * 100 : 0;
-    //                 const withinBudget = pct <= 100;
-    //                 return (
-    //                   <Cell
-    //                     key={`cell-${index}`}
-    //                     fill={withinBudget ? '#22c55e' : '#ef4444'}
-    //                   />
-    //                 );
-    //               })}
-    //             </Bar>
-    //           </BarChart>
-    //         </ResponsiveContainer>
-    //       )}
-    //     </>
-    //   ),
-    // },
+
     quickEntry: {
-      title: '⚡ Quick Entry',
+      title: 'Quick Entry',
       icon: '⚡',
       color: 'blue',
       component: (
@@ -661,7 +615,7 @@ export default function DashboardPage() {
       ),
     },
     recentActuals: {
-      title: '📝 Recent Actuals',
+      title: 'Recent Actuals',
       icon: '📝',
       color: 'purple',
       component: (
@@ -716,7 +670,7 @@ export default function DashboardPage() {
       ),
     },
     currentMonthSummary: {
-      title: `💰 Current Month Summary - ${format(new Date(), 'MMMM yyyy')}`,
+      title: `Current Month Summary - ${format(new Date(), 'MMMM yyyy')}`,
       icon: '💰',
       color: 'green',
       component: (
@@ -757,6 +711,10 @@ export default function DashboardPage() {
     .filter(([, config]) => config.visible)
     .sort((a, b) => a[1].order - b[1].order);
 
+  
+
+    
+   
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Page Header */}
@@ -861,6 +819,65 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+      {/* Simulate year  selection */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+  
+
+      {/* Time Frame Boxes */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 col-span-3">
+        {[
+          { label: "Daily", value: "daily", emoji: "📅" },
+          { label: "Weekly", value: "weekly", emoji: "🗓️" },
+          { label: "Monthly", value: "monthly", emoji: "📆" },
+          { label: "Yearly", value: "yearly", emoji: "📈" },
+        ].map(({ label, value, emoji }) => {
+          const active = timeFrame === value
+          return (
+            <button
+              key={value}
+              onClick={() => setTimeFrame(value)}
+              className={`
+                rounded-xl p-4 border transition-all text-center
+                ${
+                  active
+                    ? "bg-gradient-to-br from-emerald-900/60 to-emerald-800/40 border-emerald-600 shadow-lg scale-[1.02]"
+                    : "bg-gradient-to-br from-gray-900/40 to-gray-800/20 border-gray-700/50 hover:border-emerald-600/60 hover:scale-[1.02]"
+                }
+              `}
+            >
+              <div className="text-xl mb-1">{emoji}</div>
+              <div className="text-white font-bold">{label}</div>
+              {active && <div className="text-xs text-emerald-300 mt-1">Selected</div>}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Forecast Length Slider */}
+      <div className="flex flex-col space-y-2 col-span-3">
+        <label className="text-xs text-gray-400">
+          Forecast Length ({forecastLength} {timeFrame})
+        </label>
+        <input
+          type="range"
+          min={1}
+          max={maxLength}
+          value={forecastLength}
+          onChange={(e) => setForecastLength(Number(e.target.value))}
+          className="w-full h-2 rounded-lg bg-gray-700 accent-indigo-500"
+        />
+        <div className="flex justify-between text-xs text-gray-400">
+          <span>1</span>
+          <span>{maxLength}</span>
+        </div>
+      </div>
+
+    
+
+ 
+</div>
+
+
 
       {/* Widget Visibility Toggles */}
       <div className="bg-gray-900 rounded-lg p-3 border border-gray-800">

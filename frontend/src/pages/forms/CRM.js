@@ -35,7 +35,7 @@ export default function CRMPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">⚙️ Settings</h1>
           <p className="text-sm sm:text-base text-gray-400">Configure your financial planning workspace</p>
         </div>
-
+   
         {/* Quick Actions */}
         <div className="flex gap-2">
           <button
@@ -54,7 +54,29 @@ export default function CRMPage() {
           )}
         </div>
       </div>
-
+  {/* Help Section */}
+      <div className="p-3 sm:p-4 rounded-xl bg-gradient-to-r from-indigo-600/10 to-fuchsia-600/10 border border-indigo-500/30 backdrop-blur">
+        <div className="flex items-start gap-2 sm:gap-3">
+          <div className="text-xl sm:text-2xl">💡</div>
+          <div className="flex-1">
+            <h3 className="text-indigo-400 font-semibold mb-1 text-sm sm:text-base">Getting Started</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm text-gray-400">
+              <div>
+                <span className="text-blue-400 font-semibold">1. Scenarios:</span> Create different budget plans
+              </div>
+              <div>
+                <span className="text-pink-400 font-semibold">2. Categories:</span> Organize your finances
+              </div>
+              <div>
+                <span className="text-purple-400 font-semibold">3. Balance:</span> Set starting amount
+              </div>
+              <div>
+                <span className="text-green-400 font-semibold">4. Entries:</span> Add income/expenses
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       {/* Scenario Warning */}
       {!scenarioId && activeTab === 'entries' && (
         <div className="p-3 sm:p-4 rounded-xl bg-yellow-600/10 border border-yellow-500/30 backdrop-blur">
@@ -152,29 +174,7 @@ export default function CRMPage() {
 
       </div>
 
-      {/* Help Section */}
-      <div className="p-3 sm:p-4 rounded-xl bg-gradient-to-r from-indigo-600/10 to-fuchsia-600/10 border border-indigo-500/30 backdrop-blur">
-        <div className="flex items-start gap-2 sm:gap-3">
-          <div className="text-xl sm:text-2xl">💡</div>
-          <div className="flex-1">
-            <h3 className="text-indigo-400 font-semibold mb-1 text-sm sm:text-base">Getting Started</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm text-gray-400">
-              <div>
-                <span className="text-blue-400 font-semibold">1. Scenarios:</span> Create different budget plans
-              </div>
-              <div>
-                <span className="text-pink-400 font-semibold">2. Categories:</span> Organize your finances
-              </div>
-              <div>
-                <span className="text-purple-400 font-semibold">3. Balance:</span> Set starting amount
-              </div>
-              <div>
-                <span className="text-green-400 font-semibold">4. Entries:</span> Add income/expenses
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+ 
 
     </div>
   );

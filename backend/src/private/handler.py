@@ -165,88 +165,199 @@ FREQUENCY_MAP = {
     "monthly": relativedelta(months=1),
     "yearly": relativedelta(years=1),
 }
-def generate_forecast(entries,user_id, start_date=None, periods=12, simulate_years=1, time_frame="monthly"):
-    """
-    entries: list of dicts from DB query
-    start_date: date to start the forecast (optional, default today)
-    periods: number of periods per year (12 for monthly)
-    simulate_years: how many years to simulate
-    time_frame: 'monthly', 'quarterly', 'yearly'
-    """
-    if start_date is None:
-        start_date = datetime.today().replace(day=1)
+# def generate_forecast(entries,user_id, start_date=None, periods=12, simulate_years=1, time_frame="monthly",freq_map='MS'):
+#     """
+#     entries: list of dicts from DB query
+#     start_date: date to start the forecast (optional, default today)
+#     periods: number of periods per year (12 for monthly)
+#     simulate_years: how many years to simulate
+#     time_frame: 'monthly', 'quarterly', 'yearly'
+#     freq_map: 'MS','W-MON','D'
+#     """
+#     # freq_map = {"daily": "D", "weekly": "W-MON", "monthly": "MS"}
+#     if start_date is None:
+#         start_date = datetime.today().replace(day=1)
 
-    # Determine the end date
-    if time_frame == "monthly":
-        delta = relativedelta(months=1)
-    elif time_frame == "quarterly":
-        delta = relativedelta(months=3)
-    elif time_frame == "yearly":
-        delta = relativedelta(years=1)
-    else:
+#     # Determine the end date
+#     if time_frame == "monthly":
+#         delta = relativedelta(months=1)
+#     elif time_frame == 'daily':
+#         delta = relativedelta(days=1)
+#     elif time_frame =='weekly':
+#         delta = relativedelta(weeks=1)
+#     elif time_frame == "quarterly":
+#         delta = relativedelta(months=3)
+#     elif time_frame == "yearly":
+#         delta = relativedelta(years=1)
+#     else:
+#         raise ValueError("Invalid time_frame")
+
+#     total_periods = periods * simulate_years
+#     forecast = []
+
+#     for i in range(total_periods):
+#         period_start = start_date + i * delta
+#         period_end = period_start + delta - timedelta(days=1)
+        
+#         period_start = datetime(period_start.year, period_start.month, period_start.day)
+#         period_end = datetime(period_end.year, period_end.month, period_end.day, 23, 59, 59)
+#         print(f"Checking for {period_start}:{period_end}")
+
+#         period_entries = []
+
+#         for e in entries:
+#             print(f"Entry: {e['entry_name']}")
+#             freq = e["entry_frequency"]
+#             freq_delta = FREQUENCY_MAP.get(freq)
+
+#             # Only add if this period should include the entry
+#             e_start = e["entry_start_date"]
+#             e_end = e["entry_end_date"]
+            
+#             # repeat logic
+#             current = e_start
+#             while freq_delta and current <= period_end.date():
+#                 print(f"Checking for date {current} ({period_start.date()} - {period_end.date()})")
+#                 if e_end and  current > e_end:
+#                     break
+#                 if period_start.date() <= current <= period_end.date():
+#                     period_entries.append({**e, "entry_date": current})
+#                 current += freq_delta
+
+#             # one_time entries
+#             if freq == "one_time" and period_start.date() <= e_start <= period_end.date():
+#                 period_entries.append({**e, "entry_date": e_start})
+
+#         forecast.append({
+#             "period_start": period_start.strftime("%Y-%m-%d"),
+#             "period_end": period_end.strftime("%Y-%m-%d"),
+#             "entries": period_entries,
+#             "opening_balance": 0,  # can be calculated cumulatively
+#             "closing_balance": 0,
+#             "profit_loss": sum(e["entry_amount"] if e["entry_type"]=="income" else -e["entry_amount"] for e in period_entries)
+#         })
+
+#     # Optionally calculate cumulative balance
+    
+        
+#     balance = 0
+#     rows = execute_query("SELECT initial_balance from users where id = %s",(user_id,))
+#     if len(rows)==1:
+#         balance= rows[0]['initial_balance']
+    
+#     for p in forecast:
+#         p["opening_balance"] = balance
+#         balance += p["profit_loss"]
+#         p["closing_balance"] = balance
+
+#     return forecast
+
+
+
+def generate_forecast(
+    entries,
+    user_id,
+    start_date=None,
+    forecast_length=12,
+    time_frame="monthly",
+):
+    """
+    forecast_length: number of periods (e.g. 60 months, 26 weeks)
+    time_frame: daily | weekly | monthly | quarterly | yearly
+    """
+
+    # Normalize start_date
+    if start_date is None:
+        start_date = datetime.today().date()
+    elif isinstance(start_date, datetime):
+        start_date = start_date.date()
+
+    FRAME_CONFIG = {
+        "daily": relativedelta(days=1),
+        "weekly": relativedelta(weeks=1),
+        "monthly": relativedelta(months=1),
+        "quarterly": relativedelta(months=3),
+        "yearly": relativedelta(years=1),
+    }
+
+    if time_frame not in FRAME_CONFIG:
         raise ValueError("Invalid time_frame")
 
-    total_periods = periods * simulate_years
+    delta = FRAME_CONFIG[time_frame]
+
     forecast = []
 
-    for i in range(total_periods):
+    for i in range(forecast_length):
         period_start = start_date + i * delta
-        period_end = period_start + delta - timedelta(days=1)
-        
-        period_start = datetime(period_start.year, period_start.month, period_start.day)
-        period_end = datetime(period_end.year, period_end.month, period_end.day, 23, 59, 59)
-        print(f"Checking for {period_start}:{period_end}")
+        period_end = (period_start + delta) - timedelta(days=1)
 
         period_entries = []
 
         for e in entries:
-            print(f"Entry: {e['entry_name']}")
             freq = e["entry_frequency"]
             freq_delta = FREQUENCY_MAP.get(freq)
 
-            # Only add if this period should include the entry
             e_start = e["entry_start_date"]
-            e_end = e["entry_end_date"] if e["entry_end_date"] else e_start
-            
-            # repeat logic
+            e_end = e["entry_end_date"]
+
+            if isinstance(e_start, datetime):
+                e_start = e_start.date()
+            if isinstance(e_end, datetime):
+                e_end = e_end.date()
+
+            # One-time entries
+            if freq == "one_time":
+                if period_start <= e_start <= period_end:
+                    period_entries.append({**e, "entry_date": e_start})
+                continue
+
+            if not freq_delta:
+                continue
+
             current = e_start
-            while freq_delta and current <= period_end.date():
-                print(f"Checking for date {current} ({period_start.date()} - {period_end.date()})")
-                if current > e_end:
-                    break
-                if period_start.date() <= current <= period_end.date():
-                    period_entries.append({**e, "entry_date": current})
+
+            # Skip ahead efficiently
+            while current < period_start:
                 current += freq_delta
 
-            # one_time entries
-            if freq == "one_time" and period_start.date() <= e_start <= period_end.date():
-                period_entries.append({**e, "entry_date": e_start})
+            while current <= period_end:
+                if e_end and current > e_end:
+                    break
+
+                if period_start <= current <= period_end:
+                    period_entries.append({**e, "entry_date": current})
+
+                current += freq_delta
 
         forecast.append({
             "period_start": period_start.strftime("%Y-%m-%d"),
             "period_end": period_end.strftime("%Y-%m-%d"),
             "entries": period_entries,
-            "opening_balance": 0,  # can be calculated cumulatively
+            "opening_balance": 0,
             "closing_balance": 0,
-            "profit_loss": sum(e["entry_amount"] if e["entry_type"]=="income" else -e["entry_amount"] for e in period_entries)
+            "profit_loss": sum(
+                e["entry_amount"] if e["entry_type"] == "income"
+                else -e["entry_amount"]
+                for e in period_entries
+            ),
         })
 
-    # Optionally calculate cumulative balance
-    
-        
+    # Initial balance
     balance = 0
-    rows = execute_query("SELECT initial_balance from users where id = %s",(user_id,))
-    if len(rows)==1:
-        balance= rows[0]['initial_balance']
-    
+    rows = execute_query(
+        "SELECT initial_balance FROM users WHERE id = %s",
+        (user_id,),
+    )
+    if len(rows) == 1:
+        balance = rows[0]["initial_balance"]
+
     for p in forecast:
         p["opening_balance"] = balance
         balance += p["profit_loss"]
         p["closing_balance"] = balance
 
     return forecast
-
-    
+   
 @tracer.capture_lambda_handler
 @metrics.log_metrics
 def get_entries_report(event, context):
@@ -257,8 +368,8 @@ def get_entries_report(event, context):
         params = event.get("queryStringParameters") or {}
         scenario_id = params.get("scenario_id")
         time_frame = params.get("time_frame", "monthly").lower()
-        simulate_years = int(params.get("simulate_years", 1))
-
+        forecast_length = int(params.get("forecast_length", 6))
+        
         if not scenario_id:
             return generate_response(400, {"error": "scenario_id is required"})
 
@@ -271,8 +382,13 @@ def get_entries_report(event, context):
 
         if not entries:
             return generate_response(200, {"data": []})
-        forecast = generate_forecast(entries,user_id, periods=12, simulate_years=1, time_frame="monthly")
-        return generate_response(200, {"data": forecast})
+
+        start_date = datetime.today().date()
+    
+        expanded_entries = expand_entries(entries,start_date,forecast_length,time_frame)
+        grouped_entries = aggregate_forecast(expanded_entries,user_id,time_frame)
+        
+        return generate_response(200, {"data": grouped_entries})
 
     except Exception as e:
         logger.exception("Failed to generate entries report")
@@ -333,7 +449,7 @@ def get_actuals_report(event, context):
             e.user_id = %s
             AND e.scenario_id = %s
             AND e.start_date <= %s
-            AND e.end_date >= %s
+            AND (e.end_date >= %s OR e.end_date IS NULL)
         GROUP BY
             e.id,
             e.name,
@@ -460,7 +576,7 @@ def get_actuals_history_report(event, context):
             AND a.type = 'expense'
         WHERE e.type = 'expense'
         AND e.start_date <= DATE %s
-        AND e.end_date   >= DATE %s
+        AND (e.end_date >=  DATE %s OR e.end_date IS NULL)
         AND e.user_id = %s
         AND e.scenario_id = %s
         GROUP BY e.name
@@ -518,6 +634,7 @@ def generate_response(statusCode,message):
 def decimal_default(obj):
     if isinstance(obj, Decimal):
         return float(obj)
+
     if isinstance(obj, (date, datetime)):
         return obj.isoformat()  # "YYYY-MM-DD"
     raise TypeError(f"Object of type {type(obj)} is not JSON serializable")

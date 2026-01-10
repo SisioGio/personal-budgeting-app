@@ -100,7 +100,7 @@ class MyApiStack(Stack):
             compatible_runtimes=[_lambda.Runtime.PYTHON_3_12],
             description="Shared Functions"
         )
-        # # --- Lambda functions ---
+        # Lambda functions ---
         authorizer_lambda = _lambda.Function(
             self, generate_name('authorizer', 'dev', 'lambda'),
             runtime=_lambda.Runtime.PYTHON_3_12,

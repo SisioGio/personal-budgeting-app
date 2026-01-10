@@ -8,6 +8,9 @@ import json
 from dotenv import load_dotenv
 from datetime import datetime, date
 from decimal import Decimal
+from dateutil.relativedelta import relativedelta
+from datetime import date, timedelta
+import pandas as pd
 load_dotenv()
 
 
@@ -36,7 +39,11 @@ JWT_SECRET_NAME = os.environ.get("JWT_SECRET_NAME",'jwtkey-dev-secret')
 JWT_REFRESH_NAME= os.environ.get("JWT_REFRESH_SECRET_NAME",'jwt-refresh-key-dev-secret')
 
 
+def end_of_month(d: date) -> date:
+    return (d.replace(day=1) + relativedelta(months=1)) - timedelta(days=1)
 
+def start_of_month(d: date) -> date:
+    return d.replace(day=1)
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
@@ -79,3 +86,150 @@ def generate_response(status_code, body,headers=None):
         "headers":default_headers,
         "body": json.dumps(body,default=serialize)
     }
+    
+    
+    
+
+def expand_entries(entries, start_date, forecast_length, time_frame="monthly"):
+    # Determine end date of forecast
+    if time_frame == "daily":
+        end_date = start_date + timedelta(days=forecast_length-1)
+    elif time_frame == "weekly":
+        end_date = start_date + timedelta(weeks=forecast_length-1)
+    elif time_frame == "monthly":
+        end_date = start_date + relativedelta(months=forecast_length-1)
+    elif time_frame == "quarterly":
+        end_date = start_date + relativedelta(months=3*forecast_length-1)
+    elif time_frame == "yearly":
+        end_date = start_date + relativedelta(years=forecast_length-1)
+    else:
+        raise ValueError("Invalid time_frame")
+    all_occurrences = []
+    for e in entries:
+        freq= e['entry_frequency']
+        e_start=e['entry_start_date']
+        e_end = e['entry_end_date']
+        e_name = e['entry_name']
+        print(f"Expanding entry {e_name}: {e_start}-{e_end} ({freq})")
+        if freq =='one_time':
+            if start_date <= e_start <= end_date:
+                print(f"Adding entry {e_name}")
+                all_occurrences.append({**e,"occurrence_date":e_start})
+            continue
+        freq_map = {
+                "daily": relativedelta(days=1),
+                "weekly": relativedelta(weeks=1),
+                "monthly": relativedelta(months=1),
+                "quarterly": relativedelta(months=3),
+                "yearly": relativedelta(years=1),
+            }
+        delta = freq_map[freq]
+        current = e_start
+        # If entry end date is within the period end date and current date is before the entry_end
+        while (e_end is None or current <= e_end)  and current <= end_date:
+            print(f"")
+            if current >= start_date:
+                print(f"Adding entry {e_name} for date {current}")
+                all_occurrences.append({**e,"occurrence_date":current})
+            current += delta
+    df = pd.DataFrame(all_occurrences)
+    if df.empty:
+        return df
+
+    # Annotate with calendar info
+    df["occurrence_date"] = pd.to_datetime(df["occurrence_date"], errors="coerce")
+    df["year"] = df["occurrence_date"].apply(lambda d: d.year)
+    df["month"] = df["occurrence_date"].apply(lambda d: d.month)
+    df["day"] = df["occurrence_date"].apply(lambda d: d.day)
+    df["week_no"] = df["occurrence_date"].apply(lambda d: d.isocalendar()[1])
+    
+    return df
+def get_user_balance(user_id):
+    from db import execute_query
+    row = execute_query("SELECT id, email,initial_balance FROM users WHERE id = %s",(user_id,))
+    if not row or len(row) ==0:
+        return generate_response(404, {"error": "User not found"})
+    row = row[0]
+    initial_balance = row['initial_balance']
+    return initial_balance
+
+def get_user_actual_balance(user_id):
+    from db import execute_query
+    query="""
+    SELECT
+    u.initial_balance
+    + COALESCE(
+        SUM(
+            CASE
+                WHEN a.type = 'expense' THEN -a.amount
+                ELSE a.amount
+            END
+        ),
+        0
+    ) AS current_balance
+FROM users u
+LEFT JOIN actuals a
+    ON a.user_id = u.id
+WHERE u.id = %s
+GROUP BY u.initial_balance
+"""
+    row = execute_query(query,(user_id,))
+    return row[0]['current_balance']
+    
+    
+    
+def aggregate_forecast(df,user_id, time_frame="monthly"):
+    if df.empty:
+        return []
+
+    if time_frame == "daily":
+        grouped = df.groupby("occurrence_date")
+    elif time_frame == "weekly":
+        grouped = df.groupby(["year", "week_no"])
+    elif time_frame == "monthly":
+        grouped = df.groupby(["year", "month"])
+    elif time_frame == "quarterly":
+        grouped = df.groupby([pd.Grouper(key="occurrence_date", freq="Q")])
+    elif time_frame == "yearly":
+        grouped = df.groupby("year")
+    else:
+        raise ValueError("Invalid time_frame")
+
+    forecast = []
+    initial_balance=get_user_actual_balance(user_id)
+    balance = initial_balance
+    for period, group in grouped:
+        profit_loss = group.apply(
+            lambda row: row["entry_amount"] if row["entry_type"] == "income" else -row["entry_amount"], axis=1
+        ).sum()
+        
+        income = group.apply(
+            lambda row: row["entry_amount"] if row["entry_type"] == "income" else 0, axis=1
+        ).sum()
+        expenses = group.apply(
+            lambda row: row["entry_amount"] if row["entry_type"] == "expense" else 0, axis=1
+        ).sum()
+        period_start = group["occurrence_date"].min()
+        period_end = group["occurrence_date"].max()
+        
+        opening_balance = balance
+        closing_balance = balance + profit_loss
+        balance = closing_balance
+        
+        forecast.append({
+            "period_start": period_start,
+            "period_end": period_end,
+            "income":float(income),
+            "expense":float(expenses),
+            "profit_loss": float(profit_loss),
+            "opening_balance": float(opening_balance),
+            "closing_balance": float(closing_balance),
+            
+        })
+
+    return forecast
+
+    
+
+
+

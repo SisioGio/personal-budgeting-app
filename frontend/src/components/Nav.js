@@ -44,15 +44,20 @@ export default function Nav() {
           {/* LOGO */}
           <div className="flex items-center gap-2 sm:gap-3">
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-gradient-to-br from-fuchsia-500 to-indigo-500 shadow-lg shadow-fuchsia-500/40" />
-            <span className="text-xl sm:text-2xl font-extrabold tracking-wide text-white">
-              Finbotix
-            </span>
+            
+
+            <NavLink
+              key='home'
+              to='/'
+              className="text-xl sm:text-2xl font-extrabold tracking-wide text-white"
+              
+            >
+             Finalyze
+            </NavLink>
           </div>
 
          
-
-          {/* SCENARIO SELECTOR - Visible on mobile in top row */}
-          <div className={`flex sm:hidden items-center gap-1.5 px-3 py-1.5 rounded-lg backdrop-blur border transition-all text-xs ${
+        {auth && ( <div className={`flex sm:hidden items-center gap-1.5 px-3 py-1.5 rounded-lg backdrop-blur border transition-all text-xs ${
             !scenarioId && scenarios.length > 0
               ? 'bg-yellow-600/20 border-yellow-500/50 animate-pulse'
               : 'bg-white/5 border-white/10'
@@ -85,7 +90,9 @@ export default function Nav() {
               </>
             )}
           </div>
+           )}
         </div>
+         
 
         {/* CENTER NAV TABS */}
         {auth && (<div className="flex gap-1 sm:gap-2 bg-white/5 p-1 rounded-xl backdrop-blur w-full sm:w-auto overflow-x-auto">

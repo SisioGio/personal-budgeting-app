@@ -75,7 +75,7 @@ const Login = () => {
             Login
           </button>
 
-           <GoogleLoginButton/>    
+           <GoogleLoginButton setError={setError}/>    
            </div>
       </form>
   

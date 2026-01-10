@@ -24,9 +24,10 @@ def login_google(event):
         if not users:
             
             query = "INSERT INTO users (email,password_hash) VALUES (%s,%s) RETURNING id;"
-            id = execute_query(query, (email,google_token[:100]),commit=True)
+            ids = execute_query(query, (email,google_token[:100]),commit=True)
+            id=ids[0]['id']
         else:
-            id = users[0]
+            id = users[0]['id']
 
         access_token = generate_access_token(id,email)
         refresh_token = generate_refresh_token(id,email)

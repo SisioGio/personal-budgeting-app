@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../utils/AuthContext';
 
 const HomePage = () => {
-  const { user } = useAuth();
+  const { auth } = useAuth();
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 py-8">
@@ -16,7 +16,7 @@ const HomePage = () => {
         </div>
 
         <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight px-2">
-          Welcome to <span className="bg-gradient-to-r from-fuchsia-400 to-indigo-400 bg-clip-text text-transparent">Finbotix</span>
+          Welcome to <span className="bg-gradient-to-r from-fuchsia-400 to-indigo-400 bg-clip-text text-transparent">Finalyze</span>
         </h1>
 
         <p className="text-base sm:text-xl md:text-2xl text-gray-300 max-w-2xl mx-auto px-2">
@@ -25,7 +25,7 @@ const HomePage = () => {
 
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center mt-6 sm:mt-8 px-4">
-          {user ? (
+          {auth ? (
             <>
               <Link
                 to="/dashboard"
