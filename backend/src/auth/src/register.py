@@ -11,7 +11,13 @@ def register_user(event):
         hashed_password = hash_password(password)
 
         query = "INSERT INTO users (email, password_hash,initial_balance) VALUES (%s, %s,0) RETURNING id;"
+        
+
         result = execute_query(query, (email, hashed_password),commit=True)
+        
+        id=result[0]['id']
+        query = "INSERT INTO scenarios (code,description,user_id) VALUES (%s,%s) RETURNING id;"
+        ids = execute_query(query, ('Default','Default scenario',id),commit=True)
 
         # Send confirmation email (dummy example)
         send_email(email, "Welcome!", "Please confirm your account.")

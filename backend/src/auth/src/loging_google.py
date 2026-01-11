@@ -26,6 +26,9 @@ def login_google(event):
             query = "INSERT INTO users (email,password_hash,initial_balance) VALUES (%s,%s,0) RETURNING id;"
             ids = execute_query(query, (email,google_token[:100]),commit=True)
             id=ids[0]['id']
+            query = "INSERT INTO scenarios (code,description,user_id) VALUES (%s,%s) RETURNING id;"
+            ids = execute_query(query, ('Default','Default scenario',id),commit=True)
+            
         else:
             id = users[0]['id']
 
