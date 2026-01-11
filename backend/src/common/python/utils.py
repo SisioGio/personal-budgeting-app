@@ -53,16 +53,30 @@ def verify_password(password, hashed):
 
 def generate_access_token(user_id,email):
     JWT_SECRET = get_secret(JWT_SECRET_NAME)
-    return jwt.encode({"id": user_id,"email":email}, JWT_SECRET, algorithm="HS256")
+    return jwt.encode({"id": user_id,"email":email,"iat":datetime.utcnow() ,"exp":datetime.utcnow() + timedelta(seconds=5)}, JWT_SECRET, algorithm="HS256")
 
+def decode_token(token,token_type='access',algorithms=["HS256"]):
+    secret_name = JWT_SECRET_NAME if token_type == "access" else JWT_REFRESH_NAME
+    
+    jwt_secret = get_secret(secret_name)
+    decoded=jwt.decode(token,jwt_secret,algorithms=algorithms)
+    return decoded
+    
 def generate_refresh_token(user_id,email):
-    JWT_REFRESH_SECRET = get_secret(JWT_REFRESH_NAME)
-    return jwt.encode({"id": user_id, "email":email,"type": "refresh"}, JWT_REFRESH_SECRET, algorithm="HS256")
+    jwt_secret = get_secret(JWT_REFRESH_NAME)
+    payload ={"id": user_id, "email":email,"type": "refresh","iat":datetime.utcnow() ,"exp":datetime.utcnow() + timedelta(seconds=120)}
+    return jwt.encode(
+        payload, 
+        jwt_secret, 
+        algorithm="HS256")
 
 def send_email(to, subject, body):
     # placeholder for SES or other service
     print(f"Sending email to {to}: {subject}")
     
+
+    
+       
 def serialize(obj):
     if isinstance(obj, (datetime, date)):
         return obj.isoformat()

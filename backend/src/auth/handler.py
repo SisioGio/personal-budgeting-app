@@ -1,7 +1,9 @@
 import json
+from utils import  get_secret,JWT_REFRESH_NAME,JWT_SECRET_NAME
 from src.register import register_user
 from src.login import login_user
 from src.loging_google import login_google
+from src.refresh_token import refresh_access_token
 from utils import generate_response
 # from src.verify_account import verify_account
 # from src.send_confirmation_email import send_confirmation_email
@@ -26,11 +28,14 @@ def lambda_handler(event, context):
     #     return verify_account(event)
     # if method == 'GET' and path == '/auth/confirm':
     #     return send_confirmation_email(event)
-    # if method == 'POST' and path == '/auth/refresh':
-    #     return refresh_access_token(event)
+    if method == 'POST' and path == '/auth/refresh':
+        return refresh_access_token(event)
     # if method == 'POST' and path == '/auth/request-password-reset':
     #     return request_password_reset(event)
     # if method == 'POST' and path == '/auth/reset-password':
     #     return reset_password(event)
     
     return generate_response(400, {"msg": "Invalid route or method.", "event": event})
+
+
+
