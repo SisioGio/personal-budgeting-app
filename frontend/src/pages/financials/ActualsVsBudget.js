@@ -58,45 +58,76 @@ export default function ActVsBudReport({period}) {
     const isIncome = row.type === 'income';
 
     return (
-      <div
-        key={row.entry_id}
-        className={`relative p-2 rounded-lg border transition ${
-          withinBudget
-            ? 'bg-gray-900 border-gray-800 hover:border-green-500'
-            : 'bg-red-900/20 border-red-800 hover:border-red-600'
+     <div
+  key={row.entry_id}
+  className={`relative p-2 sm:p-3 rounded-lg border transition ${
+    withinBudget
+      ? "bg-gray-900 border-gray-800 hover:border-green-500"
+      : "bg-red-900/20 border-red-800 hover:border-red-600"
+  }`}
+>
+  {/* Header */}
+  <div className="flex justify-between items-center mb-1">
+    <div className="flex items-center gap-1.5 flex-1 min-w-0">
+      <span
+        className={`w-1.5 h-1.5 rounded-full ${
+          isIncome ? "bg-green-400" : "bg-red-400"
         }`}
-      >
-        <div className="flex justify-between items-start mb-1">
-          <div className="flex items-center gap-1.5 flex-1">
-            <span className={`w-2 h-2 rounded-full ${isIncome ? 'bg-green-400' : 'bg-red-400'}`}></span>
-            <p className="font-semibold text-gray-300 text-xs truncate">{row.entry_name}</p>
-          </div>
-          <span className={`text-[10px] font-bold ml-2 ${withinBudget ? 'text-green-400' : 'text-red-400'}`}>
-            {pct.toFixed(0)}%
-          </span>
-        </div>
+      />
+      <p className="font-semibold text-gray-300 text-[11px] truncate">
+        {row.entry_name}
+      </p>
+    </div>
 
-        {/* Progress Bar */}
-        <div className="w-full h-2 mt-1 bg-gray-700 rounded-full overflow-hidden">
-          <div
-            className={`h-full ${withinBudget ? "bg-green-400" : "bg-red-500"} transition-all`}
-            style={{ width: `${Math.min(pct, 100)}%` }}
-          />
-        </div>
+    <span
+      className={`text-[10px] font-bold ml-2 shrink-0 ${
+        withinBudget ? "text-green-400" : "text-red-400"
+      }`}
+    >
+      {pct.toFixed(0)}%
+    </span>
+  </div>
 
-        {/* Budget / Actual */}
-        <div className="flex justify-between text-[10px] text-gray-400 mt-2">
-          <span>Budget: <span className="text-gray-300 font-mono font-semibold">${row.budget}</span></span>
-          <span>Actual: <span className="text-gray-300 font-mono font-semibold">${row.actual}</span></span>
-        </div>
+  {/* Progress Bar */}
+  <div className="w-full h-1.5 bg-gray-700 rounded-full overflow-hidden">
+    <div
+      className={`h-full ${
+        withinBudget ? "bg-green-400" : "bg-red-500"
+      } transition-all`}
+      style={{ width: `${Math.min(pct, 100)}%` }}
+    />
+  </div>
 
-        {/* Remaining Amount */}
-        <div className="mt-1 text-[10px] text-center">
-          <span className={`font-semibold ${remaining >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-            {remaining >= 0 ? '✓' : '⚠️'} {remaining >= 0 ? 'Under' : 'Over'} by ${Math.abs(remaining).toFixed(2)}
-          </span>
-        </div>
-      </div>
+  {/* Budget / Actual */}
+  <div className="flex justify-between mt-1 text-[10px] text-gray-400">
+    <span>
+      B:{" "}
+      <span className="text-gray-300 font-mono font-semibold">
+        ${row.budget}
+      </span>
+    </span>
+    <span>
+      A:{" "}
+      <span className="text-gray-300 font-mono font-semibold">
+        ${row.actual}
+      </span>
+    </span>
+  </div>
+
+  {/* Remaining */}
+  <div className="mt-0.5 text-center text-[10px]">
+    <span
+      className={`font-semibold ${
+        remaining >= 0 ? "text-green-400" : "text-red-400"
+      }`}
+    >
+      {remaining >= 0 ? "✓" : "⚠️"}{" "}
+      {remaining >= 0 ? "Under" : "Over"} $
+      {Math.abs(remaining).toFixed(2)}
+    </span>
+  </div>
+</div>
+
     );
   };
 

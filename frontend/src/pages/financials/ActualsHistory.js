@@ -41,12 +41,9 @@ export default function ActualsHistory() {
               <h3 className="text-sm font-semibold text-purple-400">
                 {format(parseISO(currentMonth.period_start), 'MMMM yyyy')}
               </h3>
-              {!hasCurrentData && (
-                <span className="px-2 py-0.5 text-[10px] rounded-full bg-yellow-600/20 text-yellow-400 border border-yellow-600/30">
-                  No actuals yet
-                </span>
-              )}
+              
             </div>
+            
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setViewMode('summary')}
@@ -69,8 +66,14 @@ export default function ActualsHistory() {
                 Categories
               </button>
             </div>
-          </div>
 
+            
+          </div>
+                {!hasCurrentData && (
+                <span className="block text-center my-1 px-2 py-0.5 text-[10px] rounded-full bg-yellow-600/20 text-yellow-400 border border-yellow-600/30">
+                  No data yet
+                </span>
+              )}
           {/* Current Month Quick Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="bg-gray-900/50 rounded-lg p-3">
