@@ -948,6 +948,7 @@ export default function DashboardPage() {
 
 
 
+
         <PeriodSummary data={forecastData} isLoading={isLoading}/>
 
       {/* Widget Visibility Toggles */}
