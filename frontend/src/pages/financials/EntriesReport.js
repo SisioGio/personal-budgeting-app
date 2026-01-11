@@ -4,11 +4,9 @@ import { useForecast } from '../../queries/useEntries';
 import { useScenario } from '../../utils/ScenarioContext';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Cell, Legend } from 'recharts';
 
-export default function EntriesReport() {
+export default function EntriesReport({timeFrame,forecastLength}) {
   const { scenarioId } = useScenario();
-  const [timeFrame] = useState("monthly");
-  const [periods] = useState(12);
-  const [simulateYears] = useState(1);
+
   const [expandedPeriod, setExpandedPeriod] = useState(null);
   const [viewMode, setViewMode] = useState('chart'); // 'chart' or 'table'
 
@@ -18,29 +16,17 @@ export default function EntriesReport() {
   } = useForecast({
     scenarioId,
     timeFrame,
-    periods,
-    simulateYears,
+    forecastLength
   });
-
-  const calculateTotals = (entries) => {
-    const totalIncome = entries
-      .filter((e) => e.entry_type === "income")
-      .reduce((sum, e) => sum + e.entry_amount, 0);
-    const totalExpenses = entries
-      .filter((e) => e.entry_type === "expense")
-      .reduce((sum, e) => sum + e.entry_amount, 0);
-    const net = totalIncome - totalExpenses;
-    return { totalIncome, totalExpenses, net };
-  };
 
   // Prepare chart data
   const chartData = report.map((p) => {
-    const totals = calculateTotals(p.entries);
+    
     return {
       period: p.period_start,
-      income: totals.totalIncome,
-      expenses: totals.totalExpenses,
-      net: totals.net,
+      income:p.income,
+      expenses: p.expense,
+      net: p.profit_loss,
       balance: p.closing_balance,
       profitLoss: p.profit_loss,
     };
@@ -120,56 +106,7 @@ export default function EntriesReport() {
         </div>
       ) : (
         <>
-          {/* Summary Cards */}
-          {summary && (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              <div className="bg-green-600/10 rounded-lg p-3 border border-green-600/20">
-                <div className="text-[10px] text-gray-400 uppercase mb-1">Total Income</div>
-                <div className="text-lg font-bold text-green-400 font-mono">
-                  {summary.totalIncome.toFixed(0)}
-                </div>
-                <div className="text-[10px] text-gray-500 mt-1">
-                  Avg: {summary.avgMonthlyIncome.toFixed(0)}/mo
-                </div>
-              </div>
-
-              <div className="bg-red-600/10 rounded-lg p-3 border border-red-600/20">
-                <div className="text-[10px] text-gray-400 uppercase mb-1">Total Expenses</div>
-                <div className="text-lg font-bold text-red-400 font-mono">
-                  {summary.totalExpenses.toFixed(0)}
-                </div>
-                <div className="text-[10px] text-gray-500 mt-1">
-                  Avg: {summary.avgMonthlyExpenses.toFixed(0)}/mo
-                </div>
-              </div>
-
-              <div className={`rounded-lg p-3 border ${
-                summary.totalProfitLoss >= 0
-                  ? 'bg-blue-600/10 border-blue-600/20'
-                  : 'bg-orange-600/10 border-orange-600/20'
-              }`}>
-                <div className="text-[10px] text-gray-400 uppercase mb-1">Net P/L</div>
-                <div className={`text-lg font-bold font-mono ${
-                  summary.totalProfitLoss >= 0 ? 'text-blue-400' : 'text-orange-400'
-                }`}>
-                  {summary.totalProfitLoss >= 0 ? '+' : ''}{summary.totalProfitLoss.toFixed(0)}
-                </div>
-                <div className="text-[10px] text-gray-500 mt-1">
-                  {((summary.totalIncome - summary.totalExpenses) / chartData.length).toFixed(0)}/mo
-                </div>
-              </div>
-
-              <div className="bg-purple-600/10 rounded-lg p-3 border border-purple-600/20">
-                <div className="text-[10px] text-gray-400 uppercase mb-1">Final Balance</div>
-                <div className="text-lg font-bold text-purple-400 font-mono">
-                  {summary.finalBalance.toFixed(0)}
-                </div>
-                <div className="text-[10px] text-gray-500 mt-1">
-                  After {chartData.length} months
-                </div>
-              </div>
-            </div>
-          )}
+       
 
           {/* Chart View */}
           {viewMode === 'chart' ? (
@@ -248,7 +185,8 @@ export default function EntriesReport() {
             /* Table View */
             <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
               {report.map((p, idx) => {
-                const totals = calculateTotals(p.entries);
+                // const totals = calculateTotals(p.entries);
+
                 const isExpanded = expandedPeriod === idx;
                 const isPositive = p.profit_loss >= 0;
 
@@ -298,8 +236,8 @@ export default function EntriesReport() {
                           {/* Net Income/Expense */}
                           <div className="hidden sm:block">
                             <div className="text-gray-500 text-[10px] uppercase">Net</div>
-                            <div className={`font-mono ${totals.net >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                              {totals.net >= 0 ? '+' : ''}{totals.net.toFixed(0)}
+                            <div className={`font-mono ${p.profit_loss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                              {p.profit_loss >= 0 ? '+' : ''}{p.profit_loss.toFixed(0)}
                             </div>
                           </div>
                         </div>
@@ -318,11 +256,11 @@ export default function EntriesReport() {
                       <div className="mt-3 flex items-center gap-3 text-xs">
                         <div className="flex items-center gap-1.5 flex-1">
                           <span className="text-gray-500">💰</span>
-                          <span className="text-green-400 font-mono">{totals.totalIncome.toFixed(0)}</span>
+                          <span className="text-green-400 font-mono">{p.income.toFixed(0)}</span>
                         </div>
                         <div className="flex items-center gap-1.5 flex-1">
                           <span className="text-gray-500">💸</span>
-                          <span className="text-red-400 font-mono">{totals.totalExpenses.toFixed(0)}</span>
+                          <span className="text-red-400 font-mono">{p.expense.toFixed(0)}</span>
                         </div>
                       </div>
                     </button>

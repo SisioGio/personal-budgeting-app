@@ -29,24 +29,21 @@ export const useActVsBud = (scenarioId,period) =>
 export const useForecast = ({
   scenarioId,
   timeFrame,
-  periods,
-  simulateYears,
+  forecastLength
 }) =>
   useQuery({
     queryKey: [
       'entries-report',
       scenarioId,
       timeFrame,
-      periods,
-      simulateYears,
+      forecastLength
     ],
     enabled: !!scenarioId,
     queryFn: async () => {
       const params = {
         scenario_id: scenarioId,
         time_frame: timeFrame,
-        periods,
-        simulate_years: simulateYears,
+        forecast_length:forecastLength
       };
 
       const res = await apiClient.get('/private/entries', { params });

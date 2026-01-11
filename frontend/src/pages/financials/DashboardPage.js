@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useForecast, useActVsBud, useEntries } from './../../queries/useEntries';
+import { useForecast, useActVsBud, useEntries } from '../../queries/useEntries';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import apiClient from './../../utils/apiClient';
+import apiClient from '../../utils/apiClient';
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { useScenario } from '../../utils/ScenarioContext';
 import EntriesReport from './EntriesReport';
@@ -9,17 +9,25 @@ import ActualsHistory from './ActualsHistory';
 import EmptyScenarioPrompt from '../../components/EmptyScenarioPrompt';
 import { format } from 'date-fns';
 import { ChevronDownIcon, ChevronUpIcon, EyeIcon, EyeSlashIcon, Bars3Icon } from '@heroicons/react/24/outline';
+import CashFlow from './dashboards/CashFlow';
+import ProfitAndLoss from './dashboards/ProfitAndLoss';
+import PeriodSummary from './dashboards/PeriodSummary';
+import IncomeVsExpense from './dashboards/IncomeVsExpense';
+import BalanceVsPl from './dashboards/BalanceVsPL';
+import MonhtlyIncome from './dashboards/MonthlyIncome';
 
 const DASHBOARD_WIDGETS_KEY = 'finance-dashboard-widgets';
 
 const DEFAULT_WIDGETS = {
   cashFlow: { visible: true, expanded: true, order: 0 },
   profitLoss: { visible: true, expanded: true, order: 1 },
-  quickEntry: { visible: true, expanded: true, order: 2 },
-  recentActuals: { visible: true, expanded: false, order: 3 },
-  currentMonthSummary: { visible: true, expanded: false, order: 4 },
-  entriesReport: { visible: true, expanded: false, order: 5 },
-  actualsHistory: { visible: true, expanded: false, order: 6 },
+  incomeVsExpense: { visible: true, expanded: true, order: 2 },
+  balanceVsPl: { visible: true, expanded: true, order: 3 },
+  monthlyIncome: { visible: true, expanded: true, order: 4 },
+  quickEntry: { visible: true, expanded: true, order: 5 },
+  recentActuals: { visible: true, expanded: false, order: 6 },
+  currentMonthSummary: { visible: true, expanded: false, order: 7 },
+  actualsHistory: { visible: true, expanded: false, order: 8 },
 };
 
 export default function DashboardPage() {
@@ -62,7 +70,7 @@ export default function DashboardPage() {
   const { data: forecastData = [], isLoading } = useForecast({
     scenarioId,
     timeFrame: timeFrame,
-    forecast_length: forecastLength
+    forecastLength: forecastLength
   });
 
   const { data: actualVsBudget = [] } = useActVsBud(scenarioId, currentPeriod);
@@ -353,6 +361,8 @@ export default function DashboardPage() {
   const kpis = calculateKPIs();
 
   const formatChartData = () => {
+
+    console.log("Calculating new forecast data")
     return forecastData.map((period) => {
    
 
@@ -360,6 +370,7 @@ export default function DashboardPage() {
         date: period.period_start,
         income:period.income,
         expense:period.expense,
+        opening_balance: period.opening_balance,
         net_balance: period.closing_balance,
         profit_loss: period.profit_loss,
       };
@@ -370,56 +381,62 @@ export default function DashboardPage() {
     return <EmptyScenarioPrompt />;
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center space-y-3">
-          <div className="text-5xl animate-pulse">📊</div>
-          <p className="text-gray-400 text-lg">Loading dashboard...</p>
-        </div>
-      </div>
-    );
-  }
+  // if (isLoading) {
+  //   return (
+  //     <div className="flex items-center justify-center min-h-[400px]">
+  //       <div className="text-center space-y-3">
+  //         <div className="text-5xl animate-pulse">📊</div>
+  //         <p className="text-gray-400 text-lg">Loading dashboard...</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   const widgetComponents = {
     cashFlow: {
-      title: 'Cash Flow / Net Balance (Monthly)',
-      icon: '💰',
+      title: 'Cash Flow / Net Balance',
+      icon: '',
       color: 'blue',
       component: (
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={formatChartData()}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-            <XAxis dataKey="date" stroke="#aaa" />
-            <YAxis stroke="#aaa" />
-            <Tooltip contentStyle={{ backgroundColor: '#111', border: 'none' }} />
-            <Line type="monotone" dataKey="income" stroke="#4ade80" strokeWidth={2} />
-            <Line type="monotone" dataKey="expense" stroke="#f87171" strokeWidth={2} />
-            <Line type="monotone" dataKey="net_balance" stroke="#60a5fa" strokeWidth={2} />
-          </LineChart>
-        </ResponsiveContainer>
+        <CashFlow data={forecastData} isLoading={isLoading}/>
       ),
     },
     profitLoss: {
-      title: 'Profit / Loss Over Time (Monthly)',
-      icon: '📈',
+      title: 'Profit / Loss Over Time',
+      icon: '',
       color: 'pink',
       component: (
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={formatChartData()}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-            <XAxis dataKey="date" stroke="#aaa" />
-            <YAxis stroke="#aaa" />
-            <Tooltip contentStyle={{ backgroundColor: '#111', border: 'none' }} />
-            <Line type="monotone" dataKey="profit_loss" stroke="#facc15" strokeWidth={2} />
-          </LineChart>
-        </ResponsiveContainer>
+        <ProfitAndLoss data={forecastData} isLoading={isLoading}/>
+      ),
+    },
+    incomeVsExpense: {
+      title: 'Income vs Expense',
+      icon: '',
+      color: 'blue',
+      component: (
+        <IncomeVsExpense data={forecastData} isLoading={isLoading}/>
+      ),
+    },
+    balanceVsPl: {
+      title: 'Balance & Profit/Loss Trend',
+      icon: '',
+      color: 'green',
+      component: (
+        <BalanceVsPl data={forecastData} isLoading={isLoading}/>
       ),
     },
 
+    monthlyIncome: {
+      title: 'Monthly Net Income',
+      icon: '',
+      color: 'purple',
+      component: (
+        <MonhtlyIncome data={forecastData} isLoading={isLoading}/>
+      ),
+    },
     quickEntry: {
       title: 'Quick Entry',
-      icon: '⚡',
+      icon: '',
       color: 'blue',
       component: (
         <div className="space-y-3">
@@ -616,7 +633,7 @@ export default function DashboardPage() {
     },
     recentActuals: {
       title: 'Recent Actuals',
-      icon: '📝',
+      icon: '',
       color: 'purple',
       component: (
         <div className="space-y-1.5 max-h-[300px] overflow-y-auto">
@@ -671,7 +688,7 @@ export default function DashboardPage() {
     },
     currentMonthSummary: {
       title: `Current Month Summary - ${format(new Date(), 'MMMM yyyy')}`,
-      icon: '💰',
+      icon: '',
       color: 'green',
       component: (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
@@ -692,15 +709,10 @@ export default function DashboardPage() {
         </div>
       ),
     },
-    entriesReport: {
-      title: 'Monthly Forecast Report',
-      icon: '📈 ',
-      color: 'green',
-      component: <EntriesReport />,
-    },
+   
     actualsHistory: {
       title: 'Actuals vs Budget History',
-      icon: '📊',
+      icon: '',
       color: 'purple',
       component: <ActualsHistory />,
     },
@@ -720,8 +732,8 @@ export default function DashboardPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">📊 Financial Dashboard</h1>
-          <p className="text-sm sm:text-base text-gray-400">Visualize your financial forecast and performance</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">Financial Dashboard</h1>
+        
         </div>
 
         {/* Widget Controls */}
@@ -824,7 +836,7 @@ export default function DashboardPage() {
   
 
       {/* Time Frame Boxes */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 col-span-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 lg:col-span-3">
         {[
           { label: "Daily", value: "daily", emoji: "📅" },
           { label: "Weekly", value: "weekly", emoji: "🗓️" },
@@ -837,7 +849,7 @@ export default function DashboardPage() {
               key={value}
               onClick={() => setTimeFrame(value)}
               className={`
-                rounded-xl p-4 border transition-all text-center
+                rounded-xl p-4 border transition-all text-center flex justify-start gap-1 align-middle
                 ${
                   active
                     ? "bg-gradient-to-br from-emerald-900/60 to-emerald-800/40 border-emerald-600 shadow-lg scale-[1.02]"
@@ -854,7 +866,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Forecast Length Slider */}
-      <div className="flex flex-col space-y-2 col-span-3">
+      <div className="flex flex-col space-y-2 col-span-1">
         <label className="text-xs text-gray-400">
           Forecast Length ({forecastLength} {timeFrame})
         </label>
@@ -871,13 +883,9 @@ export default function DashboardPage() {
           <span>{maxLength}</span>
         </div>
       </div>
+    </div>
 
-    
-
- 
-</div>
-
-
+        <PeriodSummary data={forecastData} isLoading={isLoading}/>
 
       {/* Widget Visibility Toggles */}
       <div className="bg-gray-900 rounded-lg p-3 border border-gray-800">

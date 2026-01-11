@@ -12,6 +12,7 @@ class InfraStack(Stack):
         bucket = s3.Bucket(
             self,
             "FrontendBucket",
+            bucket_name='finalyze.alessiogiovannini.com',
             website_index_document="index.html",
             website_error_document="index.html",
             block_public_access=s3.BlockPublicAccess.BLOCK_ACLS,

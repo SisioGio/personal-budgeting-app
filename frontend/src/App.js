@@ -8,11 +8,11 @@ import NotFound from "./pages/general/NotFound";
 import Login from './pages/account/Login';
 import Private from './pages/general/Private';
 import ProtectedRoute from './utils/ProtectedRoute'
-import CRMPage from './pages/forms/CRM';
+import CRMPage from './pages/financials/CRM';
 
-import DashboardPage from './pages/forms/DashboardPage';
-import ActualsManager from './pages/forms/ActualsManager';
-import ActualsHistory from './pages/forms/ActualsHistory';
+import DashboardPage from './pages/financials/DashboardPage';
+import ActualsManager from './pages/financials/ActualsManager';
+import ActualsHistory from './pages/financials/ActualsHistory';
 
 const App = () => {
 
