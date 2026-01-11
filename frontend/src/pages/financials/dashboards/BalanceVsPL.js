@@ -1,5 +1,5 @@
 
-import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer,  Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer,  Legend } from 'recharts';
 
 export default function BalanceVsPl({data,isLoading}){
 

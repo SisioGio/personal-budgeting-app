@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { jwtDecode } from 'jwt-decode';
 import apiClient from './apiClient';
 
 
@@ -11,14 +10,7 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [auth, setAuth] = useState(null);
 
-  const decodeAccessToken = useCallback((token) => {
-    try {
-      return jwtDecode(token);
-    } catch (error) {
-      console.error('Invalid token:', error);
-      return null;
-    }
-  }, []);
+
 
 
   const loginWithToken = useCallback(async (accessToken) => {

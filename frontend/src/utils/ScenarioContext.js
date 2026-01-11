@@ -1,5 +1,5 @@
 // src/context/ScenarioContext.jsx
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState } from "react";
 
 const ScenarioContext = createContext(null);
 const SCENARIO_STORAGE_KEY = 'finance-selected-scenario';

@@ -6,9 +6,8 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, R
 
 export default function EntriesReport({timeFrame,forecastLength}) {
   const { scenarioId } = useScenario();
-
   const [expandedPeriod, setExpandedPeriod] = useState(null);
-  const [viewMode, setViewMode] = useState('chart'); // 'chart' or 'table'
+  const [viewMode, setViewMode] = useState('chart');
 
   const {
     data: report = [],
@@ -31,16 +30,6 @@ export default function EntriesReport({timeFrame,forecastLength}) {
       profitLoss: p.profit_loss,
     };
   });
-
-  // Calculate summary statistics
-  const summary = report.length > 0 ? {
-    totalIncome: chartData.reduce((sum, d) => sum + d.income, 0),
-    totalExpenses: chartData.reduce((sum, d) => sum + d.expenses, 0),
-    avgMonthlyIncome: chartData.reduce((sum, d) => sum + d.income, 0) / chartData.length,
-    avgMonthlyExpenses: chartData.reduce((sum, d) => sum + d.expenses, 0) / chartData.length,
-    finalBalance: report[report.length - 1]?.closing_balance || 0,
-    totalProfitLoss: chartData.reduce((sum, d) => sum + d.profitLoss, 0),
-  } : null;
 
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {

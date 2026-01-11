@@ -1,7 +1,4 @@
 
-import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
-
-
 export default function PeriodSummary({data,isLoading}){
 
  // Prepare chart data

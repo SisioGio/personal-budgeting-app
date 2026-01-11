@@ -2,9 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useForecast, useActVsBud, useEntries } from '../../queries/useEntries';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import apiClient from '../../utils/apiClient';
-import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { useScenario } from '../../utils/ScenarioContext';
-import EntriesReport from './EntriesReport';
 import ActualsHistory from './ActualsHistory';
 import EmptyScenarioPrompt from '../../components/EmptyScenarioPrompt';
 import { format } from 'date-fns';
@@ -360,37 +358,13 @@ export default function DashboardPage() {
 
   const kpis = calculateKPIs();
 
-  const formatChartData = () => {
 
-    console.log("Calculating new forecast data")
-    return forecastData.map((period) => {
-   
-
-      return {
-        date: period.period_start,
-        income:period.income,
-        expense:period.expense,
-        opening_balance: period.opening_balance,
-        net_balance: period.closing_balance,
-        profit_loss: period.profit_loss,
-      };
-    });
-  };
 
   if (!scenarioId) {
     return <EmptyScenarioPrompt />;
   }
 
-  // if (isLoading) {
-  //   return (
-  //     <div className="flex items-center justify-center min-h-[400px]">
-  //       <div className="text-center space-y-3">
-  //         <div className="text-5xl animate-pulse">📊</div>
-  //         <p className="text-gray-400 text-lg">Loading dashboard...</p>
-  //       </div>
-  //     </div>
-  //   );
-  // }
+
 
   const widgetComponents = {
     cashFlow: {

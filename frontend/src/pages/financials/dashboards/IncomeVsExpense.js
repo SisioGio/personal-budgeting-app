@@ -1,5 +1,5 @@
 
-import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer,  Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis,  CartesianGrid, ResponsiveContainer,  Legend } from 'recharts';
 
 export default function IncomeVsExpense({data,isLoading}){
 
