@@ -86,7 +86,7 @@ def serialize(obj):
 
 
    
-def generate_response(status_code, body,headers=None):
+def generate_response(status_code, body,headers=None,access_token=None,refresh_token=None):
     default_headers = {
         "Access-Control-Allow-Origin": "*",  # Allow all origins
         "Access-Control-Allow-Headers": "Content-Type,Authorization",
@@ -94,6 +94,14 @@ def generate_response(status_code, body,headers=None):
     }
     if headers:
         default_headers.update(headers)
+    
+    set_cookie= []
+    if  access_token:
+        set_cookie.append(f"access_token={access_token}; HttpOnly; Secure; SameSite=Strict; Path=/")
+    if  refresh_token:
+        set_cookie.append(f"refresh_token={refresh_token}; HttpOnly; Secure; SameSite=Strict; Path=/refresh")
+    
+    default_headers['Set-Cookie']=set_cookie
         
     return {
         "statusCode": status_code,
@@ -102,7 +110,29 @@ def generate_response(status_code, body,headers=None):
     }
     
     
-    
+def get_cookie(event, name):
+    # HTTP API (v2)
+    if "cookies" in event:
+        for cookie in event["cookies"]:
+            key, _, value = cookie.partition("=")
+            if key == name:
+                return value
+
+    # REST API (v1)
+    headers = event.get("headers", {})
+    cookie_header = headers.get("Cookie") or headers.get("cookie")
+    if not cookie_header:
+        return None
+
+    cookies = cookie_header.split(";")
+    for c in cookies:
+        key, _, value = c.strip().partition("=")
+        if key == name:
+            return value
+
+    return None
+
+   
 
 def expand_entries(entries, start_date, forecast_length, time_frame="monthly"):
     # Determine end date of forecast

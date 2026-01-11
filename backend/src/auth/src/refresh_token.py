@@ -1,11 +1,11 @@
 import json
 from db import execute_query
-from utils import verify_password, generate_access_token, generate_refresh_token,generate_response,get_secret,decode_token
+from utils import verify_password, generate_access_token, generate_refresh_token,generate_response,get_secret,decode_token,get_cookie
 import jwt
 def refresh_access_token(event):
     try:
-        body = json.loads(event['body'])
-        refresh_token = body['refreshToken']
+
+        refresh_token = get_cookie(event, "refresh_token")
         decoded = decode_token(refresh_token,'refresh')
         principal_id = decoded['id']
         email = decoded['email']
@@ -15,7 +15,8 @@ def refresh_access_token(event):
                 'msg':'new_token',
                 "access_token": access_token,
                 "refresh_token": refresh_token
-            })
+            },
+            access_token=access_token,refresh_token=refresh_token)
         
     except jwt.ExpiredSignatureError:
         return generate_response(401, {"error": "Refresh token expired"})

@@ -37,7 +37,8 @@ def login_google(event):
         return generate_response(200,{
                 "access_token": access_token,
                 "refresh_token": refresh_token
-            })
+            },
+            access_token=access_token,refresh_token=refresh_token)
         
     except Exception as e:
     
