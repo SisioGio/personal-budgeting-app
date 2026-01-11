@@ -49,6 +49,8 @@ def lambda_handler(event, context):
     print(event)
     if http_method == 'GET' and path == '/private/signin':
         return signin(event,context)
+    elif http_method == 'GET' and path == '/private/balance':
+        return get_balance(event,context)
     elif http_method == 'PUT' and path == '/private/balance':
         return update_user(event,context)
     elif http_method == 'GET' and path == '/private/entries':
@@ -88,12 +90,6 @@ def signin(event, context):
         if not email:
             return generate_response(401, {"error": "Unauthorized"})
 
-        # with db_conn.cursor() as cur:
-        #     cur.execute(
-        #         "SELECT id, email,initial_balance FROM users WHERE email = %s",
-        #         (email,)
-        #     )
-        #     row = cur.fetchone()
         row = execute_query("SELECT id, email,initial_balance FROM users WHERE email = %s",(email,))
 
         if not row or len(row) ==0:
@@ -113,6 +109,29 @@ def signin(event, context):
     except Exception as e:
         logger.exception("Failed to get user profile")
         return generate_response(500, {"error": "Internal server error"})
+
+
+
+@tracer.capture_lambda_handler
+@metrics.log_metrics
+def get_balance(event, context):
+    try:
+        logger.info("Getting user profile")
+
+        req_context = event.get("requestContext", {})
+        authorizer = req_context.get("authorizer", {})
+        user_id = event["requestContext"]["authorizer"]["principalId"]
+
+
+        current_balance = get_user_actual_balance(user_id)
+
+        return generate_response(200, {"data": {"actual_balance":current_balance}})
+
+    except Exception as e:
+        logger.exception("Failed to get user profile")
+        return generate_response(500, {"error": "Internal server error"})
+
+
 
 @tracer.capture_lambda_handler
 @metrics.log_metrics
