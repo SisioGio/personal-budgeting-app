@@ -10,7 +10,7 @@ export default function CashFlow({data,isLoading}){
    
 
       return {
-        date: period.period_start,
+        date: period.label,
         income:period.income,
         expense:period.expense,
         opening_balance: period.opening_balance,

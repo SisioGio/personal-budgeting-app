@@ -1,7 +1,7 @@
 {
-  "short_name": "ArchIntel",
- "name": "ArchIntel - AI Solutions",
-  "description": "Uno strumento web per architetti e professionisti per automatizzare la compilazione dei documenti e integrare l'intelligenza artificiale nelle loro attività.",
+  "short_name": "Finalyze",
+ "name": "Finalyze Alessio Giovannini",
+  "description": "Budgeting App for personal Finances",
   "icons": [
     {
       "src": "favicon.ico",

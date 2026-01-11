@@ -1137,7 +1137,7 @@ function DashboardWidget({ widgetKey, title, icon, color, expanded, onToggle, on
       {/* Widget Content */}
       <div
         className={`
-          overflow-hidden transition-all duration-500 ease-in-out
+          overflow-auto transition-all duration-500 ease-in-out
           ${expanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}
         `}
       >
