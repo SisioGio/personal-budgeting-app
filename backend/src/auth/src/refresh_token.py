@@ -16,10 +16,10 @@ def refresh_access_token(event):
                 "access_token": access_token,
                 "refresh_token": refresh_token
             },
-            access_token=access_token,refresh_token=refresh_token)
+            access_token=access_token,refresh_token=refresh_token,event=event)
         
     except jwt.ExpiredSignatureError:
-        return generate_response(401, {"error": "Refresh token expired"})
+        return generate_response(401, {"error": "Refresh token expired"},event=event)
 
     except jwt.InvalidTokenError:
-        return generate_response(401, {"error": "Invalid refresh token"})
+        return generate_response(401, {"error": "Invalid refresh token"},event=event)

@@ -24,8 +24,8 @@ def login_user(event):
                 "access_token": access_token,
                 "refresh_token": refresh_token
             },
-            access_token=access_token,refresh_token=refresh_token)
+            access_token=access_token,refresh_token=refresh_token,event=event)
         
     except Exception as e:
     
-        return generate_response(500,{"msg": str(e)})
+        return generate_response(500,{"msg": str(e)},event=event)

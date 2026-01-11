@@ -22,7 +22,7 @@ def lambda_handler(event, context):
         if method == "DELETE":
             return delete_entry(event)
 
-    return generate_response(400, {"msg": "Invalid route or method"})
+    return generate_response(400, {"msg": "Invalid route or method"},event=event)
 
 
 # Table entries:
@@ -39,12 +39,12 @@ def create_entry(event):
 
     for field in required_fields:
         if field not in body:
-            return generate_response(400, {"msg": f"Missing field: {field}"})
+            return generate_response(400, {"msg": f"Missing field: {field}"},event=event)
 
     if body["type"] not in ALLOWED_TYPES:
-        return generate_response(400, {"msg": "Invalid type"})
+        return generate_response(400, {"msg": "Invalid type"},event=event)
     if body["frequency"] not in ALLOWED_FREQUENCIES:
-        return generate_response(400, {"msg": "Invalid frequency"})
+        return generate_response(400, {"msg": "Invalid frequency"},event=event)
 
     query = """
         INSERT INTO entries
@@ -71,7 +71,7 @@ def create_entry(event):
     )
 
     result = execute_query(query, params, commit=True)
-    return generate_response(201, {"msg": "Entry created", "data": result})
+    return generate_response(201, {"msg": "Entry created", "data": result},event=event)
 
 
 def get_entries(event):
@@ -125,7 +125,7 @@ def get_entries(event):
         """
         result = execute_query(query, (user_id,))
 
-    return generate_response(200, {"data": result})
+    return generate_response(200, {"data": result},event=event)
 
 
 def update_entry(event):
@@ -153,7 +153,7 @@ def update_entry(event):
             values.append(body[key])
 
     if not fields:
-        return generate_response(400, {"msg": "No fields to update"})
+        return generate_response(400, {"msg": "No fields to update"},event=event)
 
     query = f"""
         UPDATE entries
@@ -165,9 +165,9 @@ def update_entry(event):
 
     result = execute_query(query, tuple(values), commit=True)
     if not result:
-        return generate_response(404, {"msg": "Entry not found"})
+        return generate_response(404, {"msg": "Entry not found"},event=event)
 
-    return generate_response(200, {"msg": "Entry updated", "data": result})
+    return generate_response(200, {"msg": "Entry updated", "data": result},event=event)
 
 
 def delete_entry(event):
@@ -176,7 +176,7 @@ def delete_entry(event):
     entry_id = body.get("id")
 
     if not entry_id:
-        return generate_response(400, {"msg": "Missing entry id"})
+        return generate_response(400, {"msg": "Missing entry id"},event=event)
 
     query = """
         DELETE FROM entries
@@ -186,9 +186,9 @@ def delete_entry(event):
     result = execute_query(query, (entry_id, user_id), commit=True)
 
     if not result:
-        return generate_response(404, {"msg": "Entry not found"})
+        return generate_response(404, {"msg": "Entry not found"},event=event)
 
-    return generate_response(200, {"msg": "Entry deleted", "data": result})
+    return generate_response(200, {"msg": "Entry deleted", "data": result},event=event)
 
 
 

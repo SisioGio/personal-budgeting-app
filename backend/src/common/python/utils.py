@@ -85,16 +85,28 @@ def serialize(obj):
     raise TypeError(f"Type {type(obj)} not serializable")
 
 
+ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "https://finalyze.alessiogiovannini.com"
+]
+
+
+
    
-def generate_response(status_code, body,headers=None,access_token=None,refresh_token=None):
+def generate_response(status_code, body,headers=None,access_token=None,refresh_token=None,event=None):
+    origin = event["headers"].get("Origin") if event else "null"
     default_headers = {
-        "Access-Control-Allow-Origin": "*",  # Allow all origins
+        
         "Access-Control-Allow-Headers": "Content-Type,Authorization",
-        "Access-Control-Allow-Methods": "OPTIONS,GET,POST,PUT,DELETE"
+        "Access-Control-Allow-Methods": "OPTIONS,GET,POST,PUT,DELETE",
+        "Access-Control-Allow-Credentials": "true"
     }
     if headers:
         default_headers.update(headers)
-    
+        
+    if origin in ALLOWED_ORIGINS:
+        default_headers["Access-Control-Allow-Origin"]= origin
+        
     set_cookie= []
     if  access_token:
         set_cookie.append(f"access_token={access_token}; HttpOnly; Secure; SameSite=Strict; Path=/")

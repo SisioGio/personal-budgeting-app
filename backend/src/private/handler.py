@@ -63,7 +63,7 @@ def lambda_handler(event, context):
         return get_user_balance(event,context)
 
     else:
-        return generate_response(404, {"message": "Invalid route"})
+        return generate_response(404, {"message": "Invalid route"},event=event)
 
 
 
@@ -88,12 +88,12 @@ def signin(event, context):
         email = authorizer.get("email")
 
         if not email:
-            return generate_response(401, {"error": "Unauthorized"})
+            return generate_response(401, {"error": "Unauthorized"},event=event)
 
         row = execute_query("SELECT id, email,initial_balance FROM users WHERE email = %s",(email,))
 
         if not row or len(row) ==0:
-            return generate_response(404, {"error": "User not found"})
+            return generate_response(404, {"error": "User not found"},event=event)
         row = row[0]
         user_id=row['id']
         user_email = row['email']
