@@ -18,7 +18,6 @@ def login_google(event):
         )
 
         email = idinfo.get("email")
-        name = idinfo.get("name")
         query = "SELECT id FROM users WHERE email=%s;"
         users = execute_query(query, (email,))
         if not users:
