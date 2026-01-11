@@ -16,7 +16,6 @@ import ActualsHistory from './pages/financials/ActualsHistory';
 
 const App = () => {
 
-const REACT_APP_GOOGLE_ID_CLIENT='83814777016-c72m88emc6ao9hb8v7tt9ooa31d6l7eg.apps.googleusercontent.com'
 
 
   return (

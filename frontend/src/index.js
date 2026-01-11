@@ -11,9 +11,13 @@ import { ScenarioProvider } from './utils/ScenarioContext';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 const queryClient = new QueryClient();
 const root = ReactDOM.createRoot(document.getElementById('root'));
+const REACT_APP_GOOGLE_ID_CLIENT='83814777016-c72m88emc6ao9hb8v7tt9ooa31d6l7eg.apps.googleusercontent.com'
+
+
+
 root.render(
 
-    <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_ID_CLIENT}>
+    <GoogleOAuthProvider clientId={REACT_APP_GOOGLE_ID_CLIENT}>
 <QueryClientProvider client={queryClient}>
     <BrowserRouter>
         <AuthProvider>
