@@ -121,7 +121,8 @@ class MyApiStack(Stack):
             environment=global_env,
             role=shared_lambda_role,
             layers=[utils_layer,common_layer],
-            timeout=Duration.seconds(90)
+            timeout=Duration.seconds(90),
+            memory_size=1024
         )
 
         public_lambda = _lambda.Function(
@@ -142,7 +143,9 @@ class MyApiStack(Stack):
             environment=global_env,
             role=shared_lambda_role,
             timeout= Duration.seconds(30),
-            layers=[utils_layer,common_layer]
+            layers=[utils_layer,common_layer],
+            memory_size=2048
+            
         )
         
         actuals_lambda = _lambda.Function(
@@ -152,7 +155,8 @@ class MyApiStack(Stack):
             code=_lambda.Code.from_asset("src/actuals"),
             environment=global_env,
             role=shared_lambda_role,
-            layers=[utils_layer,common_layer]
+            layers=[utils_layer,common_layer],
+            memory_size=1024
         )
         
         category_lambda = _lambda.Function(
@@ -162,7 +166,8 @@ class MyApiStack(Stack):
             code=_lambda.Code.from_asset("src/category"),
             environment=global_env,
             role=shared_lambda_role,
-            layers=[utils_layer,common_layer]
+            layers=[utils_layer,common_layer],
+            memory_size=1024
         )
         
         entries_lambda = _lambda.Function(
@@ -172,7 +177,8 @@ class MyApiStack(Stack):
             code=_lambda.Code.from_asset("src/entries"),
             environment=global_env,
             role=shared_lambda_role,
-            layers=[utils_layer,common_layer]
+            layers=[utils_layer,common_layer],
+            memory_size=1024
         )
         scenario_lambda = _lambda.Function(
             self, generate_name('scenario', 'dev', 'lambda'),
@@ -181,7 +187,8 @@ class MyApiStack(Stack):
             code=_lambda.Code.from_asset("src/scenario"),
             environment=global_env,
             role=shared_lambda_role,
-            layers=[utils_layer,common_layer]
+            layers=[utils_layer,common_layer],
+            memory_size=1024
         )
         
 

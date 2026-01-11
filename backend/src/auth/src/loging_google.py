@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 import os
 load_dotenv()
 
+
 def login_google(event):
     try:
         data = json.loads(event["body"])
