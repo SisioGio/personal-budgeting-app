@@ -8,7 +8,7 @@ def create_event(method,path,body=None,email=None,params={}):
         'httpMethod':method,
         'path':path,
         'body':json.dumps(body),
-        'requestContext':{'authorizer':{'email':email,'principalId':98}},
+        'requestContext':{'authorizer':{'email':email,'principalId':103}},
         'queryStringParameters':params
         
     }
@@ -20,7 +20,7 @@ event = create_event(
     "GET",
     '/private/entries',
     email=email,
-    params={'scenario_id':28,'forecast_length':12,'time_frame':'monthly'})
+    params={'scenario_id':29,'forecast_length':20,'time_frame':'daily'})
 
 res = lambda_handler(event,None)
 print(res)

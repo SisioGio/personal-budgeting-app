@@ -52,6 +52,16 @@ export default function ActualsManager() {
       },
     });
 
+
+    // Fetch current month actuals for summary
+    const { data: actualBalance = [] } = useQuery({
+      queryKey: ['actual_balance'],
+      queryFn: async () => {
+        const res = await apiClient.get(`/private/balance`);
+        return res.data.data.actual_balance;
+      },
+    });
+
     /* ------------------ STATE ------------------ */
     const [form, setForm] = useState({
       entry_id: '',
@@ -110,13 +120,11 @@ export default function ActualsManager() {
 
   const resetForm = () => {
     setEditingId(null);
-    setForm({
-      entry_id: '',
-      amount: '',
-      actual_date: format(new Date(), "yyyy-MM-dd"), // Keep today's date
-      comment: '',
-      type: ''
-    });
+    setForm(prev => ({
+      ...prev,           // keep existing values
+      amount: '',        // reset only amount
+      comment: ''        // reset only comment
+    }));
   };
 
   const handleSubmit = (e) => {
@@ -226,7 +234,11 @@ export default function ActualsManager() {
       </div>
 
       {/* Current Month Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <div className="rounded-xl bg-gradient-to-br from-green-900/40 to-green-800/20 p-4 border border-green-700/50">
+          <div className="text-green-400 text-xs font-semibold mb-1">Current Balance</div>
+          <div className="text-2xl font-bold text-white">${actualBalance.toFixed(2)}</div>
+        </div>
         <div className="rounded-xl bg-gradient-to-br from-green-900/40 to-green-800/20 p-4 border border-green-700/50">
           <div className="text-green-400 text-xs font-semibold mb-1">Income This Month</div>
           <div className="text-2xl font-bold text-white">${currentMonthSummary.totalIncome.toFixed(2)}</div>

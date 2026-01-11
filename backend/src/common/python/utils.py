@@ -105,6 +105,8 @@ def expand_entries(entries, start_date, forecast_length, time_frame="monthly"):
     else:
         raise ValueError("Invalid time_frame")
     all_occurrences = []
+    
+    start_date=start_date + relativedelta(days=1)
     for e in entries:
         freq= e['entry_frequency']
         e_start=e['entry_start_date']
@@ -198,6 +200,18 @@ def aggregate_forecast(df,user_id, time_frame="monthly"):
     forecast = []
     initial_balance=get_user_actual_balance(user_id)
     balance = initial_balance
+    
+    forecast.append({
+            "period_start": 'today',
+            "period_end": 'today',
+            "income":0,
+            "expense":0,
+            "profit_loss": 0,
+            "opening_balance": float(balance),
+            "closing_balance": float(balance),
+            
+        })
+    
     for period, group in grouped:
         profit_loss = group.apply(
             lambda row: row["entry_amount"] if row["entry_type"] == "income" else -row["entry_amount"], axis=1
@@ -219,13 +233,13 @@ def aggregate_forecast(df,user_id, time_frame="monthly"):
         forecast.append({
             "period_start": period_start.strftime("%b %d, %Y"),
             "period_end": period_end.strftime("%b %d, %Y"),
-            "income":float(income),
-            "expense":float(expenses),
+            "label": f"{period_start.strftime('%b %d')} – {period_end.strftime('%b %d, %Y')}",
+            "income": float(income),
+            "expense": float(expenses),
             "profit_loss": float(profit_loss),
             "opening_balance": float(opening_balance),
             "closing_balance": float(closing_balance),
-            
-        })
+            })
 
     return forecast
 
