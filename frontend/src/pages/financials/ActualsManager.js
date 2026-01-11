@@ -54,7 +54,7 @@ export default function ActualsManager() {
 
 
     // Fetch current month actuals for summary
-    const { data: actualBalance = [] } = useQuery({
+    const { data: actualBalance = 0 } = useQuery({
       queryKey: ['actual_balance'],
       queryFn: async () => {
         const res = await apiClient.get(`/private/balance`);

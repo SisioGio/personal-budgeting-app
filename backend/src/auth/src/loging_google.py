@@ -23,7 +23,7 @@ def login_google(event):
         users = execute_query(query, (email,))
         if not users:
             
-            query = "INSERT INTO users (email,password_hash) VALUES (%s,%s) RETURNING id;"
+            query = "INSERT INTO users (email,password_hash,initial_balance) VALUES (%s,%s,0) RETURNING id;"
             ids = execute_query(query, (email,google_token[:100]),commit=True)
             id=ids[0]['id']
         else:
