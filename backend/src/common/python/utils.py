@@ -217,8 +217,8 @@ def aggregate_forecast(df,user_id, time_frame="monthly"):
         balance = closing_balance
         
         forecast.append({
-            "period_start": period_start,
-            "period_end": period_end,
+            "period_start": period_start.strftime("%b %d, %Y"),
+            "period_end": period_end.strftime("%b %d, %Y"),
             "income":float(income),
             "expense":float(expenses),
             "profit_loss": float(profit_loss),
