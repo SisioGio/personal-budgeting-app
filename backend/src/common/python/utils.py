@@ -97,37 +97,66 @@ ALLOWED_ORIGINS = [
 
 
 
-   
-def generate_response(status_code, body,headers=None,access_token=None,refresh_token=None,event=None):
-    origin = event["headers"].get("origin") if event else "null"
+def generate_response(
+    status_code,
+    body,
+    headers=None,
+    access_token=None,
+    refresh_token=None,
+    event=None
+):
+    # ---- Origin handling ----
+    origin = None
+    if event and "headers" in event:
+        origin = event["headers"].get("origin") or event["headers"].get("Origin")
+
     print(f"Found origin: {origin}")
-    default_headers = {
-        
+
+    # ---- Base CORS headers ----
+    response_headers = {
         "Access-Control-Allow-Headers": "Content-Type,Authorization",
         "Access-Control-Allow-Methods": "OPTIONS,GET,POST,PUT,DELETE",
-        "Access-Control-Allow-Credentials": "true"
+        "Access-Control-Allow-Credentials": "true",
+        "Content-Type": "application/json"
     }
+
     if headers:
-        default_headers.update(headers)
-        
-    if origin in ALLOWED_ORIGINS:
-        default_headers["Access-Control-Allow-Origin"]= origin
+        response_headers.update(headers)
+
+    if origin and origin in ALLOWED_ORIGINS:
+        response_headers["Access-Control-Allow-Origin"] = origin
     else:
-        print(f"Origin is not allowed: {origin}")
-    set_cookie= []
-    if  access_token:
-        set_cookie.append(f"access_token={access_token}; HttpOnly; Secure; SameSite=Strict; Path=/")
-    if  refresh_token:
-        set_cookie.append(f"refresh_token={refresh_token}; HttpOnly; Secure; SameSite=Strict; Path=/refresh")
-    
-    default_headers['Set-Cookie']=set_cookie
-        
-    return {
+        print(f"Origin not allowed or missing: {origin}")
+
+    # ---- Cookies (REST API requires multiValueHeaders) ----
+    cookies = []
+
+    if access_token:
+        cookies.append(
+            f"access_token={access_token}; "
+            "HttpOnly; Secure; SameSite=None; Path=/"
+        )
+
+    if refresh_token:
+        cookies.append(
+            f"refresh_token={refresh_token}; "
+            "HttpOnly; Secure; SameSite=None; Path=/refresh"
+        )
+
+    response = {
         "statusCode": status_code,
-        "headers":default_headers,
-        "body": json.dumps(body,default=serialize)
+        "headers": response_headers,
+        "body": json.dumps(body, default=serialize)
     }
-    
+
+    # IMPORTANT: only add multiValueHeaders if cookies exist
+    if cookies:
+        response["multiValueHeaders"] = {
+            "Set-Cookie": cookies
+        }
+
+    return response
+  
     
 def get_cookie(event, name):
     # HTTP API (v2)
