@@ -13,6 +13,11 @@ from datetime import date, timedelta
 import pandas as pd
 load_dotenv()
 
+from aws_lambda_powertools import Logger, Tracer
+
+logger = Logger(service="finance-app")
+tracer = Tracer(service="finance-app")
+
 
 def get_secret(secret_name, region_name="eu-central-1"):
     """
@@ -94,7 +99,7 @@ ALLOWED_ORIGINS = [
 
    
 def generate_response(status_code, body,headers=None,access_token=None,refresh_token=None,event=None):
-    origin = event["headers"].get("Origin") if event else "null"
+    origin = event["headers"].get("origin") if event else "null"
     default_headers = {
         
         "Access-Control-Allow-Headers": "Content-Type,Authorization",

@@ -202,9 +202,13 @@ class MyApiStack(Stack):
             ),
             deploy_options=apigw.StageOptions(stage_name="dev"),
             default_cors_preflight_options=apigw.CorsOptions(
-                allow_origins=apigw.Cors.ALL_ORIGINS, 
+                allow_origins=[
+                    "http://localhost:3000",
+                    "https://finalyze.alessiogiovannini.com"
+                ],
                 allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
                 allow_headers=["Authorization", "Content-Type", "X-Amz-Date", "X-Api-Key", "X-Amz-Security-Token"],
+                allow_credentials=True,
                 max_age=Duration.seconds(3600)
             )
         )
