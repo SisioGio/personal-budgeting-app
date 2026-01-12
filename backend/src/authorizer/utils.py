@@ -32,3 +32,26 @@ def get_secret(secret_name: str, region_name: str = "eu-central-1"):
     except json.JSONDecodeError:
         return secret
 
+def get_cookie(event, name):
+    # HTTP API (v2)
+    if "cookies" in event:
+        for cookie in event["cookies"]:
+            key, _, value = cookie.partition("=")
+            if key == name:
+                return value
+
+    # REST API (v1)
+    headers = event.get("headers", {})
+    cookie_header = headers.get("Cookie") or headers.get("cookie")
+    if not cookie_header:
+        return None
+
+    cookies = cookie_header.split(";")
+    for c in cookies:
+        key, _, value = c.strip().partition("=")
+        if key == name:
+            return value
+
+    return None
+
+   

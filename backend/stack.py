@@ -79,8 +79,8 @@ class MyApiStack(Stack):
             "DB_HOST":db_host,
             "DB_NAME":'budget',
             "DB_PORT":'5432',
-            "JWT_SECRET_NAME":"jwtkey-dev-secret",
-            "JWT_REFRESH_SECRET_NAME":"jwt-refresh-key-dev-secret",
+            "JWT_SECRET_NAME":"finalyze-jwtkey-dev-secret",
+            "JWT_REFRESH_SECRET_NAME":"finalyze-jwt-refresh-key-dev-secret",
             "DB_SECRET_NAME":"rds!db-efc52989-89c8-4009-a2c3-e211a33ba1bd"
             
         }

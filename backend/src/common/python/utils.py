@@ -40,8 +40,8 @@ def get_secret(secret_name, region_name="eu-central-1"):
         else:
             import base64
             return json.loads(base64.b64decode(response['SecretBinary']))
-JWT_SECRET_NAME = os.environ.get("JWT_SECRET_NAME",'jwtkey-dev-secret')
-JWT_REFRESH_NAME= os.environ.get("JWT_REFRESH_SECRET_NAME",'jwt-refresh-key-dev-secret')
+JWT_SECRET_NAME = os.environ.get("JWT_SECRET_NAME",'finalyze-jwtkey-dev-secret')
+JWT_REFRESH_NAME= os.environ.get("JWT_REFRESH_SECRET_NAME",'finalyze-jwt-refresh-key-dev-secret')
 
 
 def end_of_month(d: date) -> date:
@@ -100,6 +100,7 @@ ALLOWED_ORIGINS = [
    
 def generate_response(status_code, body,headers=None,access_token=None,refresh_token=None,event=None):
     origin = event["headers"].get("origin") if event else "null"
+    print(f"Found origin: {origin}")
     default_headers = {
         
         "Access-Control-Allow-Headers": "Content-Type,Authorization",
@@ -111,7 +112,8 @@ def generate_response(status_code, body,headers=None,access_token=None,refresh_t
         
     if origin in ALLOWED_ORIGINS:
         default_headers["Access-Control-Allow-Origin"]= origin
-        
+    else:
+        print(f"Origin is not allowed: {origin}")
     set_cookie= []
     if  access_token:
         set_cookie.append(f"access_token={access_token}; HttpOnly; Secure; SameSite=Strict; Path=/")
