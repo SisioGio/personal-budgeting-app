@@ -13,7 +13,7 @@ from aws_cdk import Duration
 
 
 def generate_name(name,env,type):
-    return f"{name}-{env}-{type}"
+    return f"finalyze-{name}-{env}-{type}"
 class MyApiStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, db_host,db_user,db_password,**kwargs):
         super().__init__(scope, construct_id, **kwargs)
