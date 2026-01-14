@@ -224,11 +224,14 @@ class MyApiStack(Stack):
         
         
         # --- Define a Lambda authorizer ---
-        token_authorizer = apigw.TokenAuthorizer(
+        authorizer = apigw.RequestAuthorizer(
             self,
-            "LambdaTokenAuthorizer",
+            "LambdaRequestAuthorizer",
             handler=authorizer_lambda,
-            identity_source=apigw.IdentitySource.header("Authorization")
+            identity_sources=[
+                apigw.IdentitySource.header("Cookie")
+            ],
+            results_cache_ttl=Duration.seconds(0)  # disable cache while debugging
         )
         
 
@@ -258,7 +261,7 @@ class MyApiStack(Stack):
         proxy.add_method(
             "ANY",
             public_integration,
-            authorizer=token_authorizer,
+            authorizer=authorizer,
             authorization_type=apigw.AuthorizationType.CUSTOM,
             method_responses=[
                 apigw.MethodResponse(
@@ -278,7 +281,7 @@ class MyApiStack(Stack):
         proxy.add_method(
             "ANY",
             private_integration,
-            authorizer=token_authorizer,
+            authorizer=authorizer,
             authorization_type=apigw.AuthorizationType.CUSTOM,
             method_responses=[
                 apigw.MethodResponse(
@@ -299,7 +302,7 @@ class MyApiStack(Stack):
         actuals_resource.add_method(
             "ANY",
             actuals_integration,
-            authorizer=token_authorizer,
+            authorizer=authorizer,
             authorization_type=apigw.AuthorizationType.CUSTOM,
             method_responses=[
                 apigw.MethodResponse(
@@ -319,7 +322,7 @@ class MyApiStack(Stack):
         category_resource.add_method(
             "ANY",
             category_integration,
-            authorizer=token_authorizer,
+            authorizer=authorizer,
             authorization_type=apigw.AuthorizationType.CUSTOM,
             method_responses=[
                 apigw.MethodResponse(
@@ -339,7 +342,7 @@ class MyApiStack(Stack):
         entries_resource.add_method(
             "ANY",
             entries_integration,
-            authorizer=token_authorizer,
+            authorizer=authorizer,
             authorization_type=apigw.AuthorizationType.CUSTOM,
             method_responses=[
                 apigw.MethodResponse(
@@ -360,7 +363,7 @@ class MyApiStack(Stack):
         scenario_resource.add_method(
             "ANY",
             scenario_integration,
-            authorizer=token_authorizer,
+            authorizer=authorizer,
             authorization_type=apigw.AuthorizationType.CUSTOM,
             method_responses=[
                 apigw.MethodResponse(
