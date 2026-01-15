@@ -45,11 +45,11 @@ def login_google(event):
         
     except Exception as e:
         print(e)
-        return generate_response(500,{"msg": str(e)})
+        return generate_response(500,{"msg": str(e)},event=event)
     except ValueError as e:
         # Token verification failed
         print(e)
-        return generate_response(500,{"msg": "Invalid Google token"})
+        return generate_response(500,{"msg": "Invalid Google token"},event=event)
     except Exception as e:
         print(e)
-        return generate_response(500,{"msg": str(e)})
+        return generate_response(500,{"msg": str(e)},event=event)

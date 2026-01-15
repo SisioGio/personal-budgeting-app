@@ -45,7 +45,7 @@ def update_category(event):
     """
     result = execute_query(query, (name, user_id, id),commit=True)
     if not result:
-        return generate_response(404, {"msg": "Category not found."})
+        return generate_response(404, {"msg": "Category not found."},event=event)
 
     return generate_response(200, {"msg": "Category updated", "data": result},event=event)
 
@@ -56,7 +56,7 @@ def create_category(event):
     
 
     if not name:
-        return generate_response(400, {"msg": "'name'  are required."})
+        return generate_response(400, {"msg": "'name'  are required."},event=event)
 
     query = """
         INSERT INTO category (user_id, name)
@@ -72,12 +72,12 @@ def delete_category(event):
     id = body.get('id')
 
     if not id:
-        return generate_response(400, {"msg": "'id' is required to delete a category."})
+        return generate_response(400, {"msg": "'id' is required to delete a category."},event=event)
 
     query = "DELETE FROM category WHERE user_id = %s AND id = %s RETURNING *"
     result = execute_query(query, (user_id, id),commit=True)
     print(user_id)
     if not result:
-        return generate_response(404, {"msg": "category not found."})
+        return generate_response(404, {"msg": "category not found."},event=event)
 
     return generate_response(200, {"msg": "category deleted", "data": result},event=event)

@@ -134,7 +134,7 @@ def update_entry(event):
 
     entry_id = body.get("id")
     if not entry_id:
-        return generate_response(400, {"msg": "Missing entry id"})
+        return generate_response(400, {"msg": "Missing entry id"},event=event)
 
     fields = []
     values = []
@@ -146,9 +146,9 @@ def update_entry(event):
     ]:
         if key in body:
             if key == "type" and body[key] not in ALLOWED_TYPES:
-                return generate_response(400, {"msg": "Invalid type"})
+                return generate_response(400, {"msg": "Invalid type"},event=event)
             if key == "frequency" and body[key] not in ALLOWED_FREQUENCIES:
-                return generate_response(400, {"msg": "Invalid frequency"})
+                return generate_response(400, {"msg": "Invalid frequency"},event=event)
             fields.append(f"{key} = %s")
             values.append(body[key])
 

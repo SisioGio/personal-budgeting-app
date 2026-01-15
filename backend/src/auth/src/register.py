@@ -21,8 +21,8 @@ def register_user(event):
 
         # Send confirmation email (dummy example)
         send_email(email, "Welcome!", "Please confirm your account.")
-        return generate_response(201,{"id": result[0]["id"], "msg": "User registered"})
+        return generate_response(201,{"id": result[0]["id"], "msg": "User registered"},event=event)
 
     except Exception as e:
-        return generate_response(500,{"msg": str(e)})
+        return generate_response(500,{"msg": str(e)},event=event)
 

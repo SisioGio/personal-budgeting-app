@@ -36,7 +36,7 @@ def lambda_handler(event, context):
     # if method == 'POST' and path == '/auth/reset-password':
     #     return reset_password(event)
     
-    return generate_response(400, {"msg": "Invalid route or method.", "event": event})
+    return generate_response(400, {"msg": "Invalid route or method.", "event": event},event=event)
 
 
 

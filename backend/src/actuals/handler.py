@@ -37,7 +37,7 @@ def create(event):
 
     for field in required_fields:
         if field not in body:
-            return generate_response(400, {"msg": f"Missing field: {field}"})
+            return generate_response(400, {"msg": f"Missing field: {field}"},event=event)
 
     query = """
         INSERT INTO actuals
@@ -47,7 +47,7 @@ def create(event):
     """
     act_type = body['type']
     if not act_type in ALLOWED_TYPES:
-        return generate_response(400,{"msg":f"Type must be income or expense"})
+        return generate_response(400,{"msg":f"Type must be income or expense"},event=event)
     params = (
         user_id,
         body["actual_date"],
@@ -58,7 +58,7 @@ def create(event):
     )
 
     result = execute_query(query, params, commit=True)
-    return generate_response(201, {"msg": "Actual created", "data": result})
+    return generate_response(201, {"msg": "Actual created", "data": result},event=event)
 
 
 def get(event):
@@ -72,12 +72,12 @@ def get(event):
     try:
         from_date = datetime.fromisoformat(from_date_str).date() if from_date_str else None
     except ValueError:
-        return generate_response(400, {"msg": "Invalid from_date format, expected YYYY-MM-DD"})
+        return generate_response(400, {"msg": "Invalid from_date format, expected YYYY-MM-DD"},event=event)
 
     try:
         to_date = datetime.fromisoformat(to_date_str).date() if to_date_str else None
     except ValueError:
-        return generate_response(400, {"msg": "Invalid to_date format, expected YYYY-MM-DD"})
+        return generate_response(400, {"msg": "Invalid to_date format, expected YYYY-MM-DD"},event=event)
 
     # Build dynamic WHERE clause
     query = "SELECT * FROM actuals WHERE user_id = %s "
@@ -97,7 +97,7 @@ def get(event):
 
     result = execute_query(query, tuple(params_list))
 
-    return generate_response(200, {"data": result})
+    return generate_response(200, {"data": result},event=event)
 
 
 def put(event):
@@ -106,7 +106,7 @@ def put(event):
 
     actual_id = body.get("id")
     if not actual_id:
-        return generate_response(400, {"msg": "Missing actual id"})
+        return generate_response(400, {"msg": "Missing actual id"},event=event)
 
     fields = []
     values = []
@@ -114,12 +114,12 @@ def put(event):
     for key in ["actual_date", "amount", "category_id",'comment','type']:
         if key in body:
             if key =='type' and not body[key] in ALLOWED_TYPES:
-                return generate_response(400,{"msg":"Type must be income or expense"})
+                return generate_response(400,{"msg":"Type must be income or expense"},event=event)
             fields.append(f"{key} = %s")
             values.append(body[key])
 
     if not fields:
-        return generate_response(400, {"msg": "No fields to update"})
+        return generate_response(400, {"msg": "No fields to update"},event=event)
 
     query = f"""
         UPDATE actuals
@@ -131,9 +131,9 @@ def put(event):
 
     result = execute_query(query, tuple(values), commit=True)
     if not result:
-        return generate_response(404, {"msg": "Actual not found"})
+        return generate_response(404, {"msg": "Actual not found"},event=event)
 
-    return generate_response(200, {"msg": "Actual updated", "data": result})
+    return generate_response(200, {"msg": "Actual updated", "data": result},event=event)
 
 
 def delete(event):
@@ -142,7 +142,7 @@ def delete(event):
     id = body.get("id")
 
     if not id:
-        return generate_response(400, {"msg": "Missing  id"})
+        return generate_response(400, {"msg": "Missing  id"},event=event)
 
     query = """
         DELETE FROM actuals
@@ -152,9 +152,9 @@ def delete(event):
     result = execute_query(query, (id, user_id), commit=True)
 
     if not result:
-        return generate_response(404, {"msg": "Actual not found"})
+        return generate_response(404, {"msg": "Actual not found"},event=event)
 
-    return generate_response(200, {"msg": "Actual deleted", "data": result})
+    return generate_response(200, {"msg": "Actual deleted", "data": result},event=event)
 
 
 

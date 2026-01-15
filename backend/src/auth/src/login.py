@@ -11,13 +11,13 @@ def login_user(event):
         query = "SELECT * FROM users WHERE email=%s;"
         users = execute_query(query, (email,))
         if not users:
-            return generate_response(401,{"msg": "Invalid credentials"})
+            return generate_response(401,{"msg": "Invalid credentials"},event=event)
 
 
         user = users[0]
         if not verify_password(password, user["password_hash"]):
 
-            return generate_response(401,{"msg": "Invalid credentials"})
+            return generate_response(401,{"msg": "Invalid credentials"},event=event)
         access_token = generate_access_token(user["id"],user['email'])
         refresh_token = generate_refresh_token(user["id"],user['email'])
         return generate_response(200,{
