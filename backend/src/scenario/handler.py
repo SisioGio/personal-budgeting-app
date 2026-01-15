@@ -43,7 +43,7 @@ def get_scenario(event):
     user_id = event['requestContext']['authorizer']['principalId']
     query = "SELECT * FROM scenarios WHERE user_id = %s"
     result = execute_query(query, (user_id,))
-    return generate_response(200, {"data": result})
+    return generate_response(200, {"data": result},event=event)
 
 
 def update_scenario(event):
