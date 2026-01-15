@@ -43,8 +43,8 @@ def get_secret(secret_name, region_name="eu-central-1"):
 JWT_SECRET_NAME = os.environ.get("JWT_SECRET_NAME",'finalyze-jwtkey-dev-secret')
 JWT_REFRESH_NAME= os.environ.get("JWT_REFRESH_SECRET_NAME",'finalyze-jwt-refresh-key-dev-secret')
 
-ACCESS_TOKEN_EXPIRATION= os.environ.get("ACCESS_TOKEN_EXPIRATION",120)
-REFRESH_TOKEN_EXPIRATION= os.environ.get("REFRESH_TOKEN_EXPIRATION",600)
+ACCESS_TOKEN_EXPIRATION= os.environ.get("ACCESS_TOKEN_EXPIRATION","120")
+REFRESH_TOKEN_EXPIRATION= os.environ.get("REFRESH_TOKEN_EXPIRATION","600")
 
 def end_of_month(d: date) -> date:
     return (d.replace(day=1) + relativedelta(months=1)) - timedelta(days=1)
@@ -60,7 +60,7 @@ def verify_password(password, hashed):
 
 def generate_access_token(user_id,email):
     JWT_SECRET = get_secret(JWT_SECRET_NAME)
-    return jwt.encode({"id": user_id,"email":email,"iat":datetime.utcnow() ,"exp":datetime.utcnow() + timedelta(seconds=ACCESS_TOKEN_EXPIRATION)}, JWT_SECRET, algorithm="HS256")
+    return jwt.encode({"id": user_id,"email":email,"iat":datetime.utcnow() ,"exp":datetime.utcnow() + timedelta(seconds=int(ACCESS_TOKEN_EXPIRATION))}, JWT_SECRET, algorithm="HS256")
 
 def decode_token(token,token_type='access',algorithms=["HS256"]):
     secret_name = JWT_SECRET_NAME if token_type == "access" else JWT_REFRESH_NAME
@@ -71,7 +71,7 @@ def decode_token(token,token_type='access',algorithms=["HS256"]):
     
 def generate_refresh_token(user_id,email):
     jwt_secret = get_secret(JWT_REFRESH_NAME)
-    payload ={"id": user_id, "email":email,"type": "refresh","iat":datetime.utcnow() ,"exp":datetime.utcnow() + timedelta(seconds=REFRESH_TOKEN_EXPIRATION)}
+    payload ={"id": user_id, "email":email,"type": "refresh","iat":datetime.utcnow() ,"exp":datetime.utcnow() + timedelta(seconds=int(REFRESH_TOKEN_EXPIRATION))}
     return jwt.encode(
         payload, 
         jwt_secret, 
