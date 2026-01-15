@@ -21,7 +21,7 @@ def lambda_handler(event, context):
         if method == "DELETE":
             return delete(event)
 
-    return generate_response(400, {"msg": "Invalid route or method"})
+    return generate_response(400, {"msg": "Invalid route or method"},event=event)
 
 
 # Table entries:

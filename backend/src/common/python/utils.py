@@ -111,7 +111,10 @@ def generate_response(
     origin = None
     if event and "headers" in event:
         origin = event["headers"].get("origin") or event["headers"].get("Origin")
-
+    if origin is None:
+        origin = os.getenv("DEFAULT_CORS_ORIGIN")
+        
+        
     print(f"Found origin: {origin}")
 
     # ---- Base CORS headers ----
@@ -240,11 +243,13 @@ def expand_entries(entries, start_date, forecast_length, time_frame="monthly"):
     df["week_no"] = df["occurrence_date"].apply(lambda d: d.isocalendar()[1])
     
     return df
+
+
 def get_user_balance(user_id):
     from db import execute_query
     row = execute_query("SELECT id, email,initial_balance FROM users WHERE id = %s",(user_id,))
     if not row or len(row) ==0:
-        return generate_response(404, {"error": "User not found"})
+        return 0
     row = row[0]
     initial_balance = row['initial_balance']
     return initial_balance

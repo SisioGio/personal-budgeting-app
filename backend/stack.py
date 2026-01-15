@@ -83,7 +83,8 @@ class MyApiStack(Stack):
             "JWT_REFRESH_SECRET_NAME":"finalyze-jwt-refresh-key-dev-secret",
             "DB_SECRET_NAME":"rds!db-efc52989-89c8-4009-a2c3-e211a33ba1bd",
             "ACCESS_TOKEN_EXPIRATION":"600",
-            "REFRESH_TOKEN_EXPIRATION":"86400"
+            "REFRESH_TOKEN_EXPIRATION":"86400",
+            "DEFAULT_CORS_ORIGIN":"https://finalyze.alessiogiovannini.com"
             
         }
         

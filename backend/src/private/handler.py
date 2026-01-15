@@ -104,11 +104,11 @@ def signin(event, context):
             "initial_balance":initial_balance
         }
 
-        return generate_response(200, {"data": user})
+        return generate_response(200, {"data": user},event=event)
 
     except Exception as e:
         logger.exception("Failed to get user profile")
-        return generate_response(500, {"error": "Internal server error"})
+        return generate_response(500, {"error": "Internal server error"},event=event)
 
 
 
@@ -125,11 +125,11 @@ def get_balance(event, context):
 
         current_balance = get_user_actual_balance(user_id)
 
-        return generate_response(200, {"data": {"actual_balance":current_balance}})
+        return generate_response(200, {"data": {"actual_balance":current_balance}},event=event)
 
     except Exception as e:
         logger.exception("Failed to get user profile")
-        return generate_response(500, {"error": "Internal server error"})
+        return generate_response(500, {"error": "Internal server error"},event=event)
 
 
 
@@ -141,7 +141,7 @@ def update_user(event,context):
     initial_balance = body.get('initial_balance')
     
     if not initial_balance:
-        return generate_response(400, {"msg": "'code' is required to update a scenario."})
+        return generate_response(400, {"msg": "'code' is required to update a scenario."},event=event)
 
     query = """
         UPDATE users
@@ -151,9 +151,9 @@ def update_user(event,context):
     """
     result = execute_query(query, (initial_balance, user_id),commit=True)
     if not result:
-        return generate_response(404, {"msg": "User not found."})
+        return generate_response(404, {"msg": "User not found."},event=event)
 
-    return generate_response(200, {"msg": "User updated", "data": result})
+    return generate_response(200, {"msg": "User updated", "data": result},event=event)
 
 def get_entries(user_id,scenario_id):
     # Fetch entries
@@ -390,28 +390,28 @@ def get_entries_report(event, context):
         forecast_length = int(params.get("forecast_length", 6))
         
         if not scenario_id:
-            return generate_response(400, {"error": "scenario_id is required"})
+            return generate_response(400, {"error": "scenario_id is required"},event=event)
 
         freq_map = {"daily": "D", "weekly": "W-MON", "monthly": "MS"}  # MS = Month Start
 
 
         if time_frame not in freq_map:
-            return generate_response(400, {"error": "time_frame must be daily, weekly, or monthly"})
+            return generate_response(400, {"error": "time_frame must be daily, weekly, or monthly"},event=event)
         entries = get_entries(user_id,scenario_id)
 
         if not entries:
-            return generate_response(200, {"data": []})
+            return generate_response(200, {"data": []},event=event)
 
         start_date = datetime.today().date()
     
         expanded_entries = expand_entries(entries,start_date,forecast_length,time_frame)
         grouped_entries = aggregate_forecast(expanded_entries,user_id,time_frame)
         
-        return generate_response(200, {"data": grouped_entries})
+        return generate_response(200, {"data": grouped_entries},event=event)
 
     except Exception as e:
         logger.exception("Failed to generate entries report")
-        return generate_response(500, {"error": "Internal server error"})
+        return generate_response(500, {"error": "Internal server error"},event=event)
     
     
 
@@ -483,7 +483,7 @@ def get_actuals_report(event, context):
     logger.info("SQL PARAMS: %s", params)
 
     rows = execute_query(query, params)
-    return generate_response(200,{"data":rows})
+    return generate_response(200,{"data":rows},event=event)
 
 
 @tracer.capture_lambda_handler
@@ -513,7 +513,7 @@ def get_user_balance(event, context):
     rows = execute_query(query,(user_id,))
     
     current_balance = rows[0]['net_balance'] if len(rows)>0 else 0
-    return generate_response(200,{"current_balance":current_balance})
+    return generate_response(200,{"current_balance":current_balance},event=event)
     
     
 
@@ -544,7 +544,7 @@ def get_actuals_history_report(event, context):
     if not scenario_id:
         return generate_response(400, {
             "msg": "scenario_id is required"
-        })
+        },event=event)
 
     # Default to last N months if no date range specified
     if not start_period or not end_period:
@@ -634,19 +634,10 @@ def get_actuals_history_report(event, context):
 
         })
 
-    return generate_response(200, {"data": result})
+    return generate_response(200, {"data": result},event=event)
 
 
-def generate_response(statusCode,message):
-    return {
-        'statusCode': statusCode,
-        'headers': {
-                            'Access-Control-Allow-Headers': 'Content-Type',
-                            'Access-Control-Allow-Origin': '*',
-                            'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
-                        },
-        'body': json.dumps(message,default=decimal_default)
-    }
+
     
 
       
