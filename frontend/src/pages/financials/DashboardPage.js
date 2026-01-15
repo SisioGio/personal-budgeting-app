@@ -78,7 +78,7 @@ export default function DashboardPage() {
     queryKey: ['balance'],
     queryFn: async () => {
       const res = await apiClient.get('/private/balance');
-      return res.data;
+      return res.data.data;
     },
   });
 
@@ -317,7 +317,8 @@ export default function DashboardPage() {
 
   // Calculate KPIs
   const calculateKPIs = () => {
-    const currentBalance = balanceData?.current_balance || 0;
+    console.log('Balance Data:', balanceData);
+    const currentBalance = balanceData?.actual_balance || 0;
 
     // Separate expenses and income from actualVsBudget
     const expenses = actualVsBudget.filter(item => item.type === 'expense');
