@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
     try {
       // Save token temporarily for the request
       localStorage.setItem("access_token", accessToken);
-
+      
       const res = await apiClient.get("/private/signin");
 
       setAuth(res.data.data); // backend-validated user
