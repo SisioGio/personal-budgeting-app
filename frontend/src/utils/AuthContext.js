@@ -10,9 +10,6 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [auth, setAuth] = useState(null);
 
-
-
-
   const loginWithToken = useCallback(async (accessToken) => {
     try {
       // Save token temporarily for the request

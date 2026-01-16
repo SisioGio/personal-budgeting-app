@@ -8,6 +8,11 @@ import os
 load_dotenv()
 
 
+ACCESS_TOKEN_EXPIRATION= os.environ.get("ACCESS_TOKEN_EXPIRATION","120")
+REFRESH_TOKEN_EXPIRATION= os.environ.get("REFRESH_TOKEN_EXPIRATION","600")
+
+
+
 def login_google(event):
     try:
         data = json.loads(event["body"])
@@ -32,8 +37,8 @@ def login_google(event):
         else:
             id = users[0]['id']
 
-        access_token = generate_access_token(id,email)
-        refresh_token = generate_refresh_token(id,email)
+        access_token = generate_access_token(id,email,duration=ACCESS_TOKEN_EXPIRATION)
+        refresh_token = generate_refresh_token(id,email,duration=REFRESH_TOKEN_EXPIRATION)
         response = generate_response(200,{
                 "access_token": access_token,
                 "refresh_token": refresh_token
