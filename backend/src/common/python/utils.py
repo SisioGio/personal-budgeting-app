@@ -144,7 +144,7 @@ def generate_response(
     if refresh_token:
         cookies.append(
             f"refresh_token={refresh_token}; "
-            "HttpOnly; Secure; SameSite=None; Path=/refresh"
+            "HttpOnly; Secure; SameSite=None; Path=/dev/auth/refresh"
         )
 
     response = {

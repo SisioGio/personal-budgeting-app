@@ -25,7 +25,9 @@ def authorizer(event, context):
         print(policy)
         return policy
     except jwt.ExpiredSignatureError:
-        raise Exception('Token Expired')  # Token has expired
+        policy = generate_policy('user', 'Deny', event['methodArn'],context=None)
+        print(policy)
+        return policy
     except jwt.InvalidTokenError:
         raise Exception('Unauthorized')  # Invalid token
 
@@ -52,5 +54,3 @@ def generate_policy(principal_id, effect, resource,context=None):
 
 
 
-
-# authorizer({'methodArn':'testing','authorizationToken':"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6eyJpZCI6MTAwfSwiZW1haWwiOiJhbGVzc2lvZ2lvdmFubmluaTIzQGdtYWlsLmNvbSJ9.03oNniuoCHBLGJEjabIoz1NG004yr6qPYUWmb80kiBs"},None)

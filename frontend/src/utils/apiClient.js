@@ -20,6 +20,7 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response, // Return the successful response
   async (error) => {
+    console.log(error)
     if (error.response && error.response.status === 403) {
       // Token expired or unauthorized
       const refreshToken = localStorage.getItem('refresh_token');

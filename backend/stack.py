@@ -216,6 +216,15 @@ class MyApiStack(Stack):
             )
         )
         
+        api.add_gateway_response(
+                "ForbiddenResponse",
+                type=apigw.ResponseType.ACCESS_DENIED,
+                response_headers={
+                    "Access-Control-Allow-Origin": "method.request.header.origin",
+                    "Access-Control-Allow-Credentials": "'true'",
+                },
+            )
+        
         # --- Create Lambda integrations ---
         public_integration = apigw.LambdaIntegration(public_lambda)
         private_integration = apigw.LambdaIntegration(private_lambda)
