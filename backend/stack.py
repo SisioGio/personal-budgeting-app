@@ -240,7 +240,9 @@ class MyApiStack(Stack):
             self,
             "LambdaRequestAuthorizer",
             handler=authorizer_lambda,
-            identity_source=apigw.IdentitySource.header("Authorization"),
+            identity_sources=[
+                apigw.IdentitySource.header("Header")
+            ],
             results_cache_ttl=Duration.seconds(0)
         )
         
