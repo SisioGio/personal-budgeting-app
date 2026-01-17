@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
   } catch (error) {
     console.error("Token validation failed", error);
     showNotification({
-      text: `Token validation failed ${error.response?.data?.msg || error.message}`,
+      text:  `Token validation failed: ${JSON.stringify(error.toJSON())}`,
       error: true,
     });
     logout();
