@@ -13,16 +13,9 @@ const GoogleLoginButton = ({setError}) => {
   try {
     console.log(googleResponse);
     const token = googleResponse.credential;
-
     // Await the API call
     const res = await apiClient.post("/auth/google", { google_token: token });
-
     const access_token = res.data.access_token;
-    const refresh_token = res.data.refresh_token;
-
-    localStorage.setItem("access_token", access_token);
-    localStorage.setItem("refresh_token", refresh_token);
-
     loginWithToken(access_token);
     navigate("/");
 

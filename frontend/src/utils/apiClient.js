@@ -33,8 +33,8 @@ apiClient.interceptors.response.use(
           while (retryCount < maxRetries) {
             retryCount++;
             try {
-              // Send the refresh token to the server to get a new access token
-              const response = await apiClient.post('/auth/refresh');
+    
+              await apiClient.post('/auth/refresh');
               
               return apiClient(error.config); // Retry the request
             } catch (refreshError) {

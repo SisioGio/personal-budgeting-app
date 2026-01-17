@@ -10,10 +10,9 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [auth, setAuth] = useState(null);
 
-  const loginWithToken = useCallback(async (accessToken) => {
+  const loginWithToken = useCallback(async () => {
     try {
-      // Save token temporarily for the request
-      localStorage.setItem("access_token", accessToken);
+
       
       const res = await apiClient.get("/private/signin");
 
@@ -25,21 +24,12 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const logout = () => {
-    // Implement logout logic
-    localStorage.removeItem('access_token')
-    localStorage.removeItem("refresh_token")
-   
     setAuth(null);
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      setAuth(false);
-      return;
-    }
-
-    loginWithToken(token);
+    
+    loginWithToken();
   }, [loginWithToken]);
 
   return (
