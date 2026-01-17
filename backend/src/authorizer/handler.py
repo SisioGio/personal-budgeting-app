@@ -13,8 +13,9 @@ JWT_SECRET_NAME = os.environ.get("JWT_SECRET_NAME",'jwtkey-dev-secret')
 
 def authorizer(event, context):
     print(event)
-    token = event['authorizationToken']
+    
     try:
+        token = event['headers']['authorization']
         token = token.split(' ')[-1]
         secret_value = get_secret(JWT_SECRET_NAME)
         # token = get_cookie(event, "access_token")
