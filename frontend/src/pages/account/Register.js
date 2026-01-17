@@ -15,7 +15,6 @@ const useDecodedToken = (token) => {
     if (token) {
       try {
         const decodedToken = jwtDecode(token);
-        localStorage.setItem("bnb-demo-accessToken",token)
         setDecoded(decodedToken);
       } catch (error) {
         setDecoded(null)

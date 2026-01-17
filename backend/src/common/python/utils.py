@@ -337,6 +337,7 @@ def aggregate_forecast(df,user_id, time_frame="monthly"):
             "profit_loss": float(profit_loss),
             "opening_balance": float(opening_balance),
             "closing_balance": float(closing_balance),
+            "entries": group.to_dict(orient="records")
             })
 
     return forecast

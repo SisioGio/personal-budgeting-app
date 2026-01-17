@@ -20,10 +20,17 @@ event = create_event(
     "GET",
     '/private/entries',
     email=email,
-    params={'scenario_id':29,'forecast_length':20,'time_frame':'daily'})
+    params={'scenario_id':29,'forecast_length':20,'time_frame':'weekly'})
 
 res = lambda_handler(event,None)
-print(res)
+body=json.loads(res['body'])['data']
+
+for item in body:
+    print(f"{item['period_start']} - {item['period_end']}: op {item['opening_balance']} cb {item['closing_balance']} pl {item['profit_loss']} ")
+    entries = item.get('entries') if 'entries' in item else []
+    for entry in entries:
+        print(entry)
+        # print(f"{entry['entry_name']}: {entry['entry_amount']} ({entry['entry_date']} - {entry['entry_frequency']})")
 # body = json.loads(res['body'])['data']
 
 # for item in body:

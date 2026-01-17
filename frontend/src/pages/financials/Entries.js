@@ -154,9 +154,11 @@ export default function EntriesCRUD({ scenarioId }) {
       <div className="col-span-full sm:col-span-2 md:col-span-2">
       <p className="text-xs text-gray-400 mb-1 ml-1">Frequency</p>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-5 gap-2">
         {[
           { value: 'one_time', label: '⏱ One-time' },
+          { value: 'daily', label: '📅 Daily' },
+          { value: 'weekly', label: '📅 Weekly' },
           { value: 'monthly', label: '📅 Monthly' },
           { value: 'yearly', label: '🗓 Yearly' },
         ].map((f) => (
