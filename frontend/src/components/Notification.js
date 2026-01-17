@@ -32,10 +32,10 @@ const Notification = ({ message }) => {
         animate={{ y: 0, opacity: 1, x: "-50%" }}
         exit={{ y: -100, opacity: 0, x: "-50%" }}
         transition={{ duration: 0.4 }}
-        className={`fixed top-4 left-1/2 max-w-full h-screen overflow-auto${
-          message?.error ? "bg-red-600" : "bg-green-600"
-        } text-white px-6 py-3 rounded-xl shadow-lg z-50 text-sm font-medium`}
-      >
+       className={`fixed top-4 left-1/2 max-w-[90vw] break-words text-left ${
+            message?.error ? "bg-red-600" : "bg-green-600"
+          } text-white px-6 py-3 rounded-xl shadow-lg z-50 text-sm font-medium`}
+        >
         {message.text}
       </motion.div>
     </AnimatePresence>
