@@ -20,13 +20,15 @@ root.render(
     <GoogleOAuthProvider clientId={REACT_APP_GOOGLE_ID_CLIENT}>
 <QueryClientProvider client={queryClient}>
     <BrowserRouter>
+     <NotificationProvider>
         <AuthProvider>
             <ScenarioProvider>
-                <NotificationProvider>
+               
                     <App />
-                </NotificationProvider>
+           
           </ScenarioProvider>
         </AuthProvider>
+             </NotificationProvider>
     </BrowserRouter>
 </QueryClientProvider>
 </GoogleOAuthProvider>

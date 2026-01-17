@@ -27,19 +27,17 @@ export const NotificationProvider = ({ children }) => {
 const Notification = ({ message }) => {
   return (
     <AnimatePresence>
-      {message && (
-        <motion.div
-          initial={{ y: -100, opacity: 0, x: '-50%' }}
-          animate={{ y: 0, opacity: 1, x: '-50%' }}
-          exit={{ y: -100, opacity: 0, x: '-50%' }}
-          transition={{ duration: 0.4 }}
-          className={`fixed top-4 left-1/2 ${
-            message.error ? "bg-red-600" : "bg-green-600"
-          } text-white px-6 py-3 rounded-xl shadow-lg z-50 text-sm font-medium`}
-        >
-          {message.text}
-        </motion.div>
-      )}
+      <motion.div
+        initial={{ y: -100, opacity: 0, x: "-50%" }}
+        animate={{ y: 0, opacity: 1, x: "-50%" }}
+        exit={{ y: -100, opacity: 0, x: "-50%" }}
+        transition={{ duration: 0.4 }}
+        className={`fixed top-4 left-1/2 ${
+          message?.error ? "bg-red-600" : "bg-green-600"
+        } text-white px-6 py-3 rounded-xl shadow-lg z-50 text-sm font-medium`}
+      >
+        {message.text}
+      </motion.div>
     </AnimatePresence>
   );
 };
