@@ -27,8 +27,8 @@ def login_user(event):
         if not verify_password(password, user["password_hash"]):
 
             return generate_response(401,{"msg": "Invalid credentials"},event=event)
-        access_token = generate_access_token(user["id"],user['email'],duration=ACCESS_TOKEN_EXPIRATION)
-        refresh_token = generate_refresh_token(user["id"],user['email'],duration=REFRESH_TOKEN_EXPIRATION)
+        access_token = generate_access_token(user["id"],user['email'],duration=int(ACCESS_TOKEN_EXPIRATION))
+        refresh_token = generate_refresh_token(user["id"],user['email'],duration=int(REFRESH_TOKEN_EXPIRATION))
         return generate_response(200,{
                 "access_token": access_token,
                 "refresh_token": refresh_token
