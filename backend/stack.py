@@ -211,7 +211,7 @@ class MyApiStack(Stack):
                 ],
                 allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
                 allow_headers=["Authorization", "Content-Type", "X-Amz-Date", "X-Api-Key", "X-Amz-Security-Token"],
-                allow_credentials=True,
+                # allow_credentials=True,
                 max_age=Duration.seconds(3600)
             )
         )
@@ -221,7 +221,7 @@ class MyApiStack(Stack):
                 type=apigw.ResponseType.ACCESS_DENIED,
                 response_headers={
                     "Access-Control-Allow-Origin": "method.request.header.origin",
-                    "Access-Control-Allow-Credentials": "'true'",
+                    # "Access-Control-Allow-Credentials": "'true'",
                 },
             )
         
@@ -240,10 +240,8 @@ class MyApiStack(Stack):
             self,
             "LambdaRequestAuthorizer",
             handler=authorizer_lambda,
-            identity_sources=[
-                apigw.IdentitySource.header("Cookie")
-            ],
-            results_cache_ttl=Duration.seconds(0)  # disable cache while debugging
+            identity_source=apigw.IdentitySource.header("Authorization"),
+            results_cache_ttl=Duration.seconds(0)
         )
         
 

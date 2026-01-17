@@ -14,7 +14,8 @@ REFRESH_TOKEN_EXPIRATION= os.environ.get("REFRESH_TOKEN_EXPIRATION",600)
 def refresh_access_token(event):
     try:
 
-        refresh_token = get_cookie(event, "refresh_token")
+        # refresh_token = get_cookie(event, "refresh_token")
+        refresh_token = json.loads(event['body'])['refresh_token']
         decoded = decode_token(refresh_token,'refresh')
         principal_id = decoded['id']
         email = decoded['email']

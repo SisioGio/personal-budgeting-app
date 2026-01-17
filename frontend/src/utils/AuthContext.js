@@ -13,6 +13,9 @@ export const AuthProvider = ({ children }) => {
 
   const loginWithToken = useCallback(async () => {
   try {
+
+    localStorage.getItem('access_token');
+    
     const res = await apiClient.get("/private/signin");
 
     showNotification({ text: "Logged in with token", error: false });

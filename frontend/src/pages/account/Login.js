@@ -19,6 +19,10 @@ const Login = () => {
       const response = await apiClient.post('auth/login', { email, password });
       const data = await response.data;
       const access_token = data['access_token'];
+      const refresh_token = data['refresh_token'];
+      localStorage.setItem('access_token', access_token);
+      localStorage.setItem('refresh_token', refresh_token);
+      
       loginWithToken(access_token);
       navigate('/'); 
     } catch (err) {

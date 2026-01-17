@@ -154,10 +154,10 @@ def generate_response(
     }
 
     # IMPORTANT: only add multiValueHeaders if cookies exist
-    if cookies:
-        response["multiValueHeaders"] = {
-            "Set-Cookie": cookies
-        }
+    # if cookies:
+    #     response["multiValueHeaders"] = {
+    #         "Set-Cookie": cookies
+    #     }
 
     return response
   
