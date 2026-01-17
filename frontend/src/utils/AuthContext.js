@@ -12,20 +12,20 @@ export const AuthProvider = ({ children }) => {
   const  {showNotification} = useNotification();
 
   const loginWithToken = useCallback(async () => {
-    try {
+  try {
+    const res = await apiClient.get("/private/signin");
 
-      
-      const res = await apiClient.get("/private/signin");
-      showNotification({ text: "Logged in with token", error: false });
-
-      setAuth(res.data.data); // backend-validated user
-    } catch (error) {
-
-      console.error("Token validation failed", error);
-      showNotification({ text: `Token validation failed ${error}`, error:true });
-      logout();
-    }
-  }, []);
+    showNotification({ text: "Logged in with token", error: false });
+    setAuth(res.data.data);
+  } catch (error) {
+    console.error("Token validation failed", error);
+    showNotification({
+      text: `Token validation failed`,
+      error: true,
+    });
+    logout();
+  }
+}, [ showNotification, setAuth]);
 
   const logout = () => {
     setAuth(null);
