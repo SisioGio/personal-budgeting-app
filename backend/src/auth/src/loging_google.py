@@ -37,8 +37,8 @@ def login_google(event):
         else:
             id = users[0]['id']
 
-        access_token = generate_access_token(id,email,duration=ACCESS_TOKEN_EXPIRATION)
-        refresh_token = generate_refresh_token(id,email,duration=REFRESH_TOKEN_EXPIRATION)
+        access_token = generate_access_token(id,email,duration=int(ACCESS_TOKEN_EXPIRATION))
+        refresh_token = generate_refresh_token(id,email,duration=int(REFRESH_TOKEN_EXPIRATION))
         response = generate_response(200,{
                 "access_token": access_token,
                 "refresh_token": refresh_token
