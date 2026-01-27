@@ -18,12 +18,12 @@ export const AuthProvider = ({ children }) => {
     
     const res = await apiClient.get("/private/signin");
 
-    showNotification({ text: "Logged in with token", error: false });
+    showNotification({ text: "Logged in", error: false });
     setAuth(res.data.data);
   } catch (error) {
     console.error("Token validation failed", error);
     showNotification({
-      text:  `Token validation failed: ${JSON.stringify(error.toJSON())}`,
+      text:  `Login Failed`,
       error: true,
     });
     logout();

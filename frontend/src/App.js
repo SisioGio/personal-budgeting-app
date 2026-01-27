@@ -49,6 +49,8 @@ const App = () => {
           element={<ProtectedRoute children={<ActualsManager />} />}
         />
 
+
+
         <Route
           path="/actuals-history"
           element={<ProtectedRoute children={<ActualsHistory />} />}

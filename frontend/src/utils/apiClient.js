@@ -42,7 +42,7 @@ apiClient.interceptors.response.use(
             retryCount++;
             try {
               // Send the refresh token to the server to get a new access token
-              const response = await apiClient.post('/auth/refresh', { refreshToken });
+              const response = await apiClient.post('/auth/refresh', { "refresh_token":refreshToken });
               
               // Store the new access and refresh tokens
               localStorage.setItem('access_token', response.data.access_token);

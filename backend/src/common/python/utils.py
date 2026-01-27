@@ -57,9 +57,6 @@ def hash_password(password):
 def verify_password(password, hashed):
     return hash_password(password) == hashed
 
-def generate_access_token(user_id,email,duration):
-    JWT_SECRET = get_secret(JWT_SECRET_NAME)
-    return jwt.encode({"id": user_id,"email":email,"iat":datetime.utcnow() ,"exp":datetime.utcnow() + timedelta(seconds=duration)}, JWT_SECRET, algorithm="HS256")
 
 def decode_token(token,token_type='access',algorithms=["HS256"]):
     secret_name = JWT_SECRET_NAME if token_type == "access" else JWT_REFRESH_NAME
@@ -67,10 +64,15 @@ def decode_token(token,token_type='access',algorithms=["HS256"]):
     jwt_secret = get_secret(secret_name)
     decoded=jwt.decode(token,jwt_secret,algorithms=algorithms)
     return decoded
-    
-def generate_refresh_token(user_id,email,duration):
+
+
+def generate_access_token(id,email,role,duration):
+    JWT_SECRET = get_secret(JWT_SECRET_NAME)
+    return jwt.encode({"id": id,"email":email,"role":role,"iat":datetime.utcnow() ,"exp":datetime.utcnow() + timedelta(seconds=duration)}, JWT_SECRET, algorithm="HS256")
+   
+def generate_refresh_token(id,email,role,duration):
     jwt_secret = get_secret(JWT_REFRESH_NAME)
-    payload ={"id": user_id, "email":email,"type": "refresh","iat":datetime.utcnow() ,"exp":datetime.utcnow() + timedelta(seconds=duration)}
+    payload ={"id": id, "email":email,"role":role,"type": "refresh","iat":datetime.utcnow() ,"exp":datetime.utcnow() + timedelta(seconds=duration)}
     return jwt.encode(
         payload, 
         jwt_secret, 

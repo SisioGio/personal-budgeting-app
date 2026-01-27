@@ -123,11 +123,38 @@ Contributions, feedback, and improvements are very welcome!
 
  - Add export functionality (CSV / PDF)
 
+## UI
+### Budget Entries
+![alt text](/screenshots/image.png)
+### Scenario
+![alt text](/screenshots/image-1.png)
+### Categories
+![alt text](/screenshots/image-2.png)
+
+### Actuals
+![alt text](/screenshots/image-3.png)
+![alt text](/screenshots/image-4.png)
+### Dashboard Intro
+![alt text](/screenshots/image-5.png)
+### Cash Flow Month
+![alt text](/screenshots/image-6.png)
+### Cash Flow Weekly
+![alt text](/screenshots/image-7.png)
+### Cash Flow Daily
+![alt text](/screenshots/image-8.png)
+
+### Income vs Expense
+![alt text](/screenshots/image-9.png)
+### PL
+![alt text](/screenshots/image-10.png)
+
+### Actuals Overview
+![alt text](/screenshots/image-11.png)
 # Contact
 
 Alessio Giovannini
 
 📧 Email: alessiogiovannini23@gmail.com
 
-🌐 Website: https://www.alessiogiovannini.com
+🌐 Website: https://alessiogiovannini.com
 
