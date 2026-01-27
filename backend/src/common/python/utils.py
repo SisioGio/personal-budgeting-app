@@ -66,13 +66,13 @@ def decode_token(token,token_type='access',algorithms=["HS256"]):
     return decoded
 
 
-def generate_access_token(id,email,role,duration):
+def generate_access_token(id,email,duration):
     JWT_SECRET = get_secret(JWT_SECRET_NAME)
-    return jwt.encode({"id": id,"email":email,"role":role,"iat":datetime.utcnow() ,"exp":datetime.utcnow() + timedelta(seconds=duration)}, JWT_SECRET, algorithm="HS256")
+    return jwt.encode({"id": id,"email":email,"iat":datetime.utcnow() ,"exp":datetime.utcnow() + timedelta(seconds=duration)}, JWT_SECRET, algorithm="HS256")
    
-def generate_refresh_token(id,email,role,duration):
+def generate_refresh_token(id,email,duration):
     jwt_secret = get_secret(JWT_REFRESH_NAME)
-    payload ={"id": id, "email":email,"role":role,"type": "refresh","iat":datetime.utcnow() ,"exp":datetime.utcnow() + timedelta(seconds=duration)}
+    payload ={"id": id, "email":email,"type": "refresh","iat":datetime.utcnow() ,"exp":datetime.utcnow() + timedelta(seconds=duration)}
     return jwt.encode(
         payload, 
         jwt_secret, 
